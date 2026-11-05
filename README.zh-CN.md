@@ -6,6 +6,44 @@
 
 三个 LSTM 专家读取同一段窗口，差别来自初始化和学到的门控权重。脚本只打印类别数量，不做重采样。
 
+主输入是 Hive 分钟线。未设置 Parquet 根目录时，回退到日频 CSV。
+
+## Parquet 分钟线
+
+把 `MOE_DATA_PARQUET` 设为处理后的美股逐笔报价分钟线数据集根目录，目录形如：
+
+```text
+parquet/symbol=SYMBOL/security=HASH/year=YYYY/data.parquet
+```
+
+`MOE_SYMBOL` 是 ticker（`symbol=`）。同一个 ticker 有多个 `security=` 哈希时再设置 `MOE_SECURITY`。只有一个哈希时会自动选中。脚本读取每个 `year=` 文件，保留 `AuditSession == regular` 的行，并丢掉成交价为空的分钟（没有成交）。其余分钟按 `TimeBarStart` 排序（文件里只有成交时间时用 `FirstTradeTime`），再按日历日聚成一行。
+
+| 分钟字段 | 日线列 |
+| --- | --- |
+| 当天第一笔 `FirstTradePrice` | `Open` |
+| `HighTradePrice` 的最大值 | `High` |
+| `LowTradePrice` 的最小值 | `Low` |
+| 当天最后一笔 `LastTradePrice` | `Close/Last` |
+| `Volume` 之和 | `Volume` |
+
+文件里的 `Date` 是 `YYYYMMDD`。聚合后是 datetime。`Volume` 留在表上，不作为模型特征。指标、标签和回测与解析后的 CSV 走同一段代码。
+
+```bash
+export MOE_DATA_PARQUET=/path/to/dataset-root
+export MOE_SYMBOL=AAPL
+# export MOE_SECURITY=your-hash   # 同一 ticker 有多个 security 时才需要
+export MPLBACKEND=Agg
+python moe_lstm.py
+```
+
+`MOE_DATA_PARQUET` 也可以直接指向 `parquet/` 目录。真实行情不放进本仓库。设置了 `MOE_DATA_PARQUET` 时，它优先于 `MOE_DATA_CSV`。
+
+```bash
+python -m unittest tests.test_hive_daily_bars
+```
+
+这个检查会建一棵合成的 Hive 目录并比较日线 OHLCV，不需要 TensorFlow。`.github/workflows/parquet-loader.yml` 在 pull request 上，以及向 `main` 的 push 上运行它。下面的 CSV 约定只用于 `MOE_DATA_CSV`。
+
 ## 环境
 
 在 Python 3.12 上核对过。
@@ -28,6 +66,7 @@ pip install -r requirements.txt
 | minisom | 2.3.6 |
 | matplotlib | 3.11.2 |
 | seaborn | 0.13.2 |
+| pyarrow | 26.0.1 |
 
 Keras 单独锁定，是因为 TensorFlow 2.21.0 只要求 `keras>=3.12`。精确版本避免以后一次全新安装选到 pandas 4 或更新的 numpy。K-Means 显式使用 `n_init=10`，因为 scikit-learn 1.4 把默认值改成了 `auto`。
 
@@ -41,7 +80,7 @@ export MPLBACKEND=Agg
 python moe_lstm.py
 ```
 
-没有命令行参数。数据只看环境变量 `MOE_DATA_CSV`。未设置时读取 `DEFAULT_DATA_URL`。该变量可以是本地路径，也可以是 `pandas.read_csv` 能打开的 URL。
+没有命令行参数。设置了 `MOE_DATA_PARQUET` 时，数据来自那个 Hive 根目录。否则数据来自 `MOE_DATA_CSV`。未设置时读取 `DEFAULT_DATA_URL`。该变量可以是本地路径，也可以是 `pandas.read_csv` 能打开的 URL。
 
 使用 Agg 后端时，脚本把图画出后关闭，不调用 `plt.show()`，因此不会出现无显示画布警告。只有交互式后端才会调用 `plt.show()`。
 

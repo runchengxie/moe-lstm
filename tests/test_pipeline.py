@@ -209,6 +209,51 @@ class LoadTests(unittest.TestCase):
         self.assertGreaterEqual(split.n_test, 1)
         self.assertIsNone(moe_lstm.session_gap_warning(features["Date"]))
 
+    def test_study_loader_prefers_hive_minutes_and_still_validates_csv(self):
+        from tests.test_hive_daily_bars import _minute_frame, _write_year
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            csv_path = root / "ignored.csv"
+            csv_path.write_text(
+                "Date,Open,High,Low,Close/Last\nnot-a-date,1,1,1,1\n",
+                encoding="utf-8",
+            )
+            _write_year(
+                root,
+                "ZURA",
+                "only-hash",
+                "2024",
+                _minute_frame(
+                    [
+                        {
+                            "Date": "20240102",
+                            "TimeBarStart": "09:31",
+                            "AuditSession": "regular",
+                            "FirstTradePrice": "2",
+                            "HighTradePrice": "3",
+                            "LowTradePrice": "1",
+                            "LastTradePrice": "2.5",
+                            "Volume": 4,
+                        }
+                    ]
+                ),
+            )
+            loaded = moe_lstm.load_study_prices(
+                {
+                    "MOE_DATA_PARQUET": str(root),
+                    "MOE_SYMBOL": "ZURA",
+                    "MOE_DATA_CSV": str(csv_path),
+                }
+            )
+            self.assertEqual(loaded.loc[0, "Open"], 2.0)
+            self.assertEqual(float(loaded.loc[0, "Close/Last"]), 2.5)
+            self.assertTrue(pd.api.types.is_datetime64_any_dtype(loaded["Date"]))
+
+            with self.assertRaises(SystemExit) as caught:
+                moe_lstm.load_study_prices({"MOE_DATA_CSV": str(csv_path)})
+            self.assertIn("%m/%d/%Y", str(caught.exception))
+
     def test_header_only_file_is_rejected(self):
         path = _write_csv(pd.DataFrame(columns=["Date", "Close/Last", "Open", "High", "Low"]))
         try:

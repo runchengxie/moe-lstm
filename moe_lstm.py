@@ -1,19 +1,25 @@
 """Mixture-of-experts LSTM for the next session's index direction.
 
-The script reads a daily OHLC CSV, builds technical features, selects subsets
+The script reads daily OHLC bars, builds technical features, selects subsets
 with K-Means and a self-organizing map, and trains one LSTM mixture on each
 subset. A prediction of 1 is long and 0 is short. The backtest earns the next
 close-to-close return. Feature selection seeds are fixed. LSTM training is not
 bitwise reproducible.
 
-中文说明与上面相同。脚本读取日频 OHLC CSV，计算技术指标，用 K-Means 和自组织
-映射挑选特征子集，并分别训练 LSTM 混合专家。预测 1 做多，0 做空，回测赚取下一
-根 K 线的收盘到收盘收益。特征选择的随机种子是固定的，LSTM 训练结果不能逐位复现。
+`MOE_DATA_PARQUET` loads Hive minute bars and aggregates one row per session.
+When that variable is unset, `MOE_DATA_CSV` (or the default URL) is the source.
+
+中文说明与上面相同。脚本读取日频 OHLC，计算技术指标，用 K-Means 和自组织映射挑选
+特征子集，并分别训练 LSTM 混合专家。预测 1 做多，0 做空，回测赚取下一根 K 线的
+收盘到收盘收益。特征选择的随机种子是固定的，LSTM 训练结果不能逐位复现。
+设置 `MOE_DATA_PARQUET` 时读取 Hive 分钟线并聚合成日线；未设置时使用
+`MOE_DATA_CSV` 或默认 URL。
 类别计数只打印，不重采样。三个专家读同一段输入，差别来自初始化和门控权重。
 """
 
 import os
 from collections import defaultdict
+from collections.abc import Mapping
 from typing import NamedTuple
 
 import numpy as np
@@ -30,6 +36,8 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.preprocessing import MinMaxScaler
+
+from price_data import load_price_frame
 
 # Study defaults. requirements.txt does not pin a solver, so K-Means sets
 # n_init explicitly: sklearn 1.4 changed the default from 10 to "auto".
@@ -194,6 +202,24 @@ def load_price_csv(data_path: str) -> pd.DataFrame:
         )
 
     return parsed.sort_values("Date").reset_index(drop=True)
+
+
+def load_study_prices(env: Mapping[str, str] | None = None) -> pd.DataFrame:
+    """Daily bars for one study run.
+
+    A non-empty ``MOE_DATA_PARQUET`` reads Hive minute bars and wins over
+    ``MOE_DATA_CSV``. The CSV path still uses the strict column contract.
+    """
+    if env is None:
+        env = os.environ
+    if str(env.get("MOE_DATA_PARQUET", "")).strip():
+        frame = load_price_frame(env)
+        return frame.sort_values("Date").reset_index(drop=True)
+    if "MOE_DATA_CSV" in env:
+        path = env["MOE_DATA_CSV"]
+    else:
+        path = DEFAULT_DATA_URL
+    return load_price_csv(path)
 
 
 def relative_strength_index(close: pd.Series, window: int = 14) -> pd.Series:
@@ -672,8 +698,7 @@ def _metrics_table(results: list[dict]) -> pd.DataFrame:
 
 def main(epochs: int | None = None) -> pd.DataFrame:
     epochs = resolve_epochs(epochs)
-    data_path = resolve_data_path()
-    raw = load_price_csv(data_path)
+    raw = load_study_prices()
     _print_overview(raw)
     _plot_close(raw)
 
