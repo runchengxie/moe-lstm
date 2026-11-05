@@ -19,6 +19,8 @@
 
 # 载入必要的库
 
+import os
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,7 +32,6 @@ from tensorflow.keras.layers import LSTM, Dense
 from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.cluster import KMeans
-!pip install minisom
 from minisom import MiniSom
 from collections import defaultdict
 from sklearn.metrics import (
@@ -43,7 +44,7 @@ from sklearn.metrics import (
     classification_report
 )
 
-from tensorflow.keras.layers import Input, LSTM, Dense, Concatenate, Lambda, Flatten
+from tensorflow.keras.layers import Input, LSTM, Dense, Lambda, Flatten
 from tensorflow.keras.models import Model
 import tensorflow.keras.backend as K
 
@@ -53,9 +54,18 @@ LOOKBACK = 5
 THRESHOLD = 0.002
 N_CLUSTERS = 5  # K-Means聚类数
 
-# 读取数据
-url = 'https://raw.githubusercontent.com/runchengxie/quant_practice_3/refs/heads/main/historical_data.csv'
-df = pd.read_csv(url)
+# 读取数据。默认 URL 所在仓库已不存在；本地 CSV 用环境变量 MOE_DATA_CSV 传入。
+DEFAULT_DATA_URL = "https://raw.githubusercontent.com/runchengxie/quant_practice_3/refs/heads/main/historical_data.csv"
+data_path = os.environ.get("MOE_DATA_CSV", DEFAULT_DATA_URL)
+try:
+    df = pd.read_csv(data_path)
+except Exception as exc:
+    raise SystemExit(
+        f"Could not read price data from {data_path!r} ({exc}). "
+        "Set MOE_DATA_CSV to a local CSV with columns "
+        "Date (%m/%d/%Y), Close/Last, Open, High, and Low. "
+        "Price columns must be numeric."
+    ) from exc
 df.head()
 
 # ## 初步数据查看与基础统计
@@ -373,11 +383,15 @@ def train_and_predict_moe(feature_list, model_name, lookback):
     # Gating Network
     gating_network = Dense(3, activation="softmax", name="Gating_Network")(input_seq[:, -1, :])
 
-    # Weighted sum of experts
-    weighted_sum = Lambda(lambda x: K.sum(x[0] * K.expand_dims(x[1], axis=-1), axis=1), name="Weighted_Sum")([
-        Concatenate(name="Concatenate_Experts")([flat_expert_1, flat_expert_2, flat_expert_3]),
-        gating_network
-    ])
+    # 三个专家先堆成 (batch, 3, features)，再用 3 维门控加权。
+    # 若在特征维拼接，门控最后一维是 3，无法与拼接结果相乘。
+    stacked_experts = Lambda(lambda xs: K.stack(xs, axis=1), name="Stack_Experts")(
+        [flat_expert_1, flat_expert_2, flat_expert_3]
+    )
+    weighted_sum = Lambda(
+        lambda x: K.sum(x[0] * K.expand_dims(x[1], axis=-1), axis=1),
+        name="Weighted_Sum",
+    )([stacked_experts, gating_network])
 
     # Final output layer
     final_output = Dense(1, activation="sigmoid", name="Final_Output")(weighted_sum)
@@ -491,7 +505,7 @@ for feature_cols, model_name in zip(
     ["Manual", "KMeans", "SOM"]
 ):
     # 训练模型并获取结果
-    model_result = train_and_predict(feature_cols, model_name, LOOKBACK)
+    model_result = train_and_predict_moe(feature_cols, model_name, LOOKBACK)
 
     # 执行回测
     predictions = model_result["predictions"]
