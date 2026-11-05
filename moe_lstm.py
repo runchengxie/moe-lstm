@@ -53,6 +53,8 @@ import tensorflow.keras.backend as K
 LOOKBACK = 5
 THRESHOLD = 0.002
 N_CLUSTERS = 5  # K-Means聚类数
+# 研究默认 50 轮。MOE_EPOCHS 只改训练长度（CI 短跑用 1），不改网络、损失或早停。
+EPOCHS = int(os.environ.get("MOE_EPOCHS", "50"))
 
 # 读取数据。默认 URL 所在仓库已不存在；本地 CSV 用环境变量 MOE_DATA_CSV 传入。
 DEFAULT_DATA_URL = "https://raw.githubusercontent.com/runchengxie/quant_practice_3/refs/heads/main/historical_data.csv"
@@ -403,7 +405,7 @@ def train_and_predict_moe(feature_list, model_name, lookback):
     # 训练模型
     moe_model.fit(
         X_train, y_train,
-        epochs=50,
+        epochs=EPOCHS,
         batch_size=16,
         validation_data=(X_test, y_test),
         callbacks=[EarlyStopping(patience=5, restore_best_weights=True)],
