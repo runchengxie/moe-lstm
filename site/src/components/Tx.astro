@@ -1,0 +1,26 @@
+---
+import { locales, type Localized } from "../i18n/copy";
+
+interface Props {
+  text: Localized;
+}
+
+const { text } = Astro.props;
+
+function parts(value: string) {
+  return value.split(/(`[^`]+`)/g).filter((part) => part.length > 0).map((part) => {
+    if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
+      return { code: true, value: part.slice(1, -1) };
+    }
+    return { code: false, value: part };
+  });
+}
+---
+
+{
+  locales.map((locale) => (
+    <span data-locale={locale}>
+      {parts(text[locale]).map((part) => (part.code ? <code>{part.value}</code> : part.value))}
+    </span>
+  ))
+}

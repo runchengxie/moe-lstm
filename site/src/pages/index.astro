@@ -1,0 +1,168 @@
+---
+import Base from "../layouts/Base.astro";
+import Tx from "../components/Tx.astro";
+import { copy, links, runCommand } from "../i18n/copy";
+---
+
+<Base canonical>
+  <div class="wrap">
+    <header class="hero">
+      <p class="kicker"><Tx text={copy.hero.kicker} /></p>
+      <h1><Tx text={copy.hero.title} /></h1>
+      <p class="lede"><Tx text={copy.hero.lede} /></p>
+      <ul class="notices">
+        {
+          copy.hero.notices.map((notice) => (
+            <li class={notice.tone}>
+              <Tx text={notice.text} />
+            </li>
+          ))
+        }
+      </ul>
+      <p class="asof"><Tx text={copy.hero.asOf} /></p>
+    </header>
+
+    <section class="block" id="what" aria-labelledby="what-heading">
+      <p class="sec-index">{copy.what.index}</p>
+      <div>
+        <h2 id="what-heading"><Tx text={copy.what.heading} /></h2>
+        <ol class="arch">
+          {
+            copy.arch.map((item) => (
+              <li>
+                <span class="arch-n">{item.n}</span>
+                <span class="arch-k"><Tx text={item.k} /></span>
+                <span class="arch-v"><Tx text={item.v} /></span>
+              </li>
+            ))
+          }
+        </ol>
+        <dl class="facts">
+          {
+            copy.what.facts.map((fact) => (
+              <div>
+                <dt><Tx text={fact.term} /></dt>
+                <dd><Tx text={fact.detail} /></dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+
+    <section class="block" id="pipeline" aria-labelledby="pipeline-heading">
+      <p class="sec-index">{copy.pipeline.index}</p>
+      <div>
+        <h2 id="pipeline-heading"><Tx text={copy.pipeline.heading} /></h2>
+        <ol class="steps">
+          {
+            copy.pipeline.steps.map((step, index) => (
+              <li>
+                <span class="step-n">{index + 1}</span>
+                <div>
+                  <h3><Tx text={step.name} /></h3>
+                  <p><Tx text={step.detail} /></p>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+        <p class="note"><Tx text={copy.pipeline.note} /></p>
+      </div>
+    </section>
+
+    <section class="block" id="data" aria-labelledby="data-heading">
+      <p class="sec-index">{copy.data.index}</p>
+      <div>
+        <h2 id="data-heading"><Tx text={copy.data.heading} /></h2>
+        <p class="intro"><Tx text={copy.data.intro} /></p>
+        <dl class="facts">
+          {
+            copy.data.env.map((item) => (
+              <div>
+                <dt><code class="env-name">{item.name}</code></dt>
+                <dd><Tx text={item.detail} /></dd>
+              </div>
+            ))
+          }
+        </dl>
+        <div class="table-wrap">
+          <table>
+            <caption><Tx text={copy.data.columnCaption} /></caption>
+            <thead>
+              <tr>
+                <th scope="col"><Tx text={{ zh: "列", en: "Column" }} /></th>
+                <th scope="col"><Tx text={{ zh: "约定", en: "Rule" }} /></th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                copy.data.columns.map((column) => (
+                  <tr>
+                    <th scope="row"><code>{column.name}</code></th>
+                    <td><Tx text={column.rule} /></td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+        <p><Tx text={copy.data.vendor} /></p>
+        <p>
+          <Tx text={copy.data.runCaption} />
+        </p>
+        <pre><code>{runCommand}</code></pre>
+        <p class="note"><Tx text={copy.data.runNote} /></p>
+        <p>
+          <Tx text={copy.data.defaultUrl} />
+          {" "}
+          <a href={links.defaultCsv}><code>historical_data.csv</code></a>
+        </p>
+      </div>
+    </section>
+
+    <section class="block" id="prs" aria-labelledby="prs-heading">
+      <p class="sec-index">{copy.prs.index}</p>
+      <div>
+        <h2 id="prs-heading"><Tx text={copy.prs.heading} /></h2>
+        <p class="intro"><Tx text={copy.prs.intro} /></p>
+        <div class="pr-list">
+          {
+            copy.prs.items.map((item) => (
+              <article class="pr">
+                <p class="pr-n"><a href={item.href}>{item.n}</a></p>
+                <div>
+                  <h3><a href={item.href}>{item.title}</a></h3>
+                  <p class="pr-meta">
+                    <Tx text={item.state} />
+                    {" · "}
+                    <Tx text={item.base} />
+                  </p>
+                  <p><Tx text={item.body} /></p>
+                </div>
+              </article>
+            ))
+          }
+        </div>
+        <p class="callout"><Tx text={copy.prs.order} /></p>
+      </div>
+    </section>
+
+    <section class="block" id="links" aria-labelledby="links-heading">
+      <p class="sec-index">{copy.links.index}</p>
+      <div>
+        <h2 id="links-heading"><Tx text={copy.links.heading} /></h2>
+        <dl class="link-list">
+          {
+            copy.links.items.map((item) => (
+              <div>
+                <dt><a href={item.href}><Tx text={item.label} /></a></dt>
+                <dd><Tx text={item.note} /></dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+  </div>
+</Base>

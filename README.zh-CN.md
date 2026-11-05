@@ -147,3 +147,26 @@ RSI 是 14 日简单平均。一段里既没有上涨也没有下跌时取 50，
 总收益是期末净值减 1。最大回撤是 `净值 / 累计峰值 - 1` 的最小值，为零或负数。夏普率是策略收益的均值除以样本标准差，再乘以 `sqrt(252)`。这个年化假设每根 K 线对应一个交易日。如果日期间隔的中位数不在 1 到 3 天之内，脚本会打印警告，夏普率的算法不变。策略收益为常数时，夏普率是 `NaN`。测试标签只有一个类别时，AUC 是 `NaN`，其余分类指标使用 `zero_division=0`。
 
 输出列是 `Model`、`Accuracy`、`Precision`、`Recall`、`F1`、`AUC-ROC`、`Total Return`、`Max Drawdown`、`Sharpe Ratio`，模型名为 `Manual`、`KMeans`、`SOM`。
+
+## 项目站点
+
+[`site/`](site/) 是一份双语简报。默认中文，可以切到英文。颜色跟随 `prefers-color-scheme`，也可以固定为浅色、深色或系统。 [`.github/workflows/pages.yml`](.github/workflows/pages.yml) 只构建这个 Astro 应用（Node.js 26.13.0，版本写在 `site/.nvmrc`），并用 `actions/upload-pages-artifact` 和 `actions/deploy-pages` 发布 `site/dist`。它不安装 Python 依赖。
+
+工作流在 `main` 上成功之后，站点地址是 [https://runchengxie.github.io/moe_lstm/](https://runchengxie.github.io/moe_lstm/)。2026-11-05 这个地址返回 HTTP 404，因为还没有 Pages 部署。当时 Pages API 已经把 Source 报成 GitHub Actions（`build_type: workflow`）。
+
+### 打开 GitHub Pages
+
+1. 打开 **Settings → Pages**。
+2. 在 **Build and deployment** 里把 **Source** 设为 **GitHub Actions**（不要选 “Deploy from a branch”）。
+3. 把工作流合并到 `main`。改动 `site/`、这个工作流或根目录 `README.md` 的推送会跑 `pages`。`deploy` 只在 `main` 上运行。pull request 会构建站点，但不会发布。
+4. 如果第一次运行停在 `github-pages` 环境等待批准，批准那一次。发布地址是 https://runchengxie.github.io/moe_lstm/ 。
+
+如果 Source 已经是 GitHub Actions，第 2 步不用再点。npm 和 pnpm 的本地命令，以及 `/moe_lstm/` 这个 base，写在 [`site/README.md`](site/README.md)。
+
+```bash
+cd site
+npm ci
+npm run dev
+```
+
+打开 http://127.0.0.1:4321/moe_lstm/ 。用 pnpm 时，在 `site/` 里执行 `pnpm install` 然后 `pnpm dev`。持续集成使用 npm 和 `site/package-lock.json`。
