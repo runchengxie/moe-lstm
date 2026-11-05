@@ -39,8 +39,8 @@ from sklearn.preprocessing import MinMaxScaler
 
 from price_data import load_price_frame
 
-# Study defaults. requirements.txt does not pin a solver, so K-Means sets
-# n_init explicitly: sklearn 1.4 changed the default from 10 to "auto".
+# Study defaults. The dependency pins do not select a K-Means solver, so
+# K-Means sets n_init explicitly: sklearn 1.4 changed the default from 10 to "auto".
 LOOKBACK = 5
 THRESHOLD = 0.002
 N_CLUSTERS = 5
