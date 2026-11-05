@@ -48,7 +48,7 @@ After the workflow has succeeded on `main`, the site is [https://runchengxie.git
 
 1. Open **Settings → Pages**.
 2. Under **Build and deployment**, set **Source** to **GitHub Actions** (not “Deploy from a branch”).
-3. Merge the workflow to `main`. Pushes that touch `site/`, the workflow, or the root `README.md` run `pages`. The deploy job itself runs only on `main`. A pull request builds the site and does not publish it.
+3. Merge the workflow to `main`. Pushes that touch `site/`, `docs/`, the workflow, or the root `README.md` run `pages`. The deploy job itself runs only on `main`. A pull request builds the site and does not publish it.
 4. If the first run waits on the `github-pages` environment, approve it once. The published URL is https://runchengxie.github.io/moe_lstm/ .
 
 If Source is already GitHub Actions, step 2 needs no click. Full local commands for npm and pnpm, and the `/moe_lstm/` base path, are in [`site/README.md`](../site/README.md).

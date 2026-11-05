@@ -87,9 +87,49 @@ if (stale.length > 0) {
   process.exit(1);
 }
 
-const assetHrefs = [...index.matchAll(/\s(?:href|src)="([^"]+)"/g)].map((match) => match[1]);
-const localAssets = assetHrefs.filter((href) => href.includes("/_astro/") || href.endsWith(".svg") || href.endsWith(".css") || href.endsWith(".js"));
-const unprefixed = localAssets.filter((href) => href.startsWith("/") && !href.startsWith("/moe_lstm/"));
+const docFiles = [
+  "docs/index.html",
+  "docs/setup/index.html",
+  "docs/data/index.html",
+  "docs/training/index.html",
+  "docs/ci/index.html",
+];
+const missingDocs = docFiles.filter((rel) => !existsSync(join(dist, rel)));
+if (missingDocs.length > 0) {
+  console.error("check-dist: docs routes are missing:\n" + missingDocs.map((item) => `  - ${item}`).join("\n"));
+  process.exit(1);
+}
+if (!index.includes("/moe_lstm/docs/")) {
+  console.error("check-dist: home page does not link to /moe_lstm/docs/");
+  process.exit(1);
+}
+const dataHtml = readFileSync(join(dist, "docs/data/index.html"), "utf8");
+const docNeedles = [
+  "Hive minute bars are the primary input",
+  "主输入是 Hive 分钟线",
+  "/moe_lstm/docs/setup/",
+  "/moe_lstm/docs/training/",
+  "/moe_lstm/docs/ci/",
+  "data-locale=\"en\"",
+  "data-locale=\"zh\"",
+  "https://github.com/runchengxie/moe_lstm/blob/main/README.md",
+  "https://github.com/runchengxie/moe_lstm/blob/main/docs/data.md",
+];
+const missingDocCopy = docNeedles.filter((needle) => !dataHtml.includes(needle));
+if (missingDocCopy.length > 0) {
+  console.error("check-dist: docs/data is missing:\n" + missingDocCopy.map((item) => `  - ${item}`).join("\n"));
+  process.exit(1);
+}
+
+const unprefixed = [];
+for (const file of html) {
+  const text = readFileSync(file, "utf8");
+  const hrefs = [...text.matchAll(/\s(?:href|src)="([^"]+)"/g)].map((match) => match[1]);
+  const localAssets = hrefs.filter((href) => href.includes("/_astro/") || href.endsWith(".svg") || href.endsWith(".css") || href.endsWith(".js"));
+  for (const href of localAssets) {
+    if (href.startsWith("/") && !href.startsWith("/moe_lstm/")) unprefixed.push(`${file}: ${href}`);
+  }
+}
 if (unprefixed.length > 0) {
   console.error("check-dist: local assets are missing the /moe_lstm/ base:\n" + unprefixed.join("\n"));
   process.exit(1);

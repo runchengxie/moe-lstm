@@ -1,0 +1,40 @@
+---
+import Base from "../../layouts/Base.astro";
+import DocsNav from "../../components/DocsNav.astro";
+import { docsIndexCopy, loadDocs } from "../../lib/docs";
+
+const base = import.meta.env.BASE_URL;
+const pages = loadDocs(base);
+---
+
+<Base title={docsIndexCopy.title} description={docsIndexCopy.lede}>
+  <div class="docs-shell">
+    <DocsNav current="index" pages={pages} />
+    <article class="docs-prose">
+      <h1>
+        <span data-locale="zh">{docsIndexCopy.title.zh}</span>
+        <span data-locale="en">{docsIndexCopy.title.en}</span>
+      </h1>
+      <p class="intro">
+        <span data-locale="zh">{docsIndexCopy.lede.zh}</span>
+        <span data-locale="en">{docsIndexCopy.lede.en}</span>
+      </p>
+      <ol class="docs-index">
+        {
+          pages.map((page) => (
+            <li>
+              <a href={`${base}docs/${page.slug}/`}>
+                <span data-locale="zh">{page.title.zh}</span>
+                <span data-locale="en">{page.title.en}</span>
+              </a>
+              <p>
+                <span data-locale="zh">{page.blurb.zh}</span>
+                <span data-locale="en">{page.blurb.en}</span>
+              </p>
+            </li>
+          ))
+        }
+      </ol>
+    </article>
+  </div>
+</Base>

@@ -50,7 +50,7 @@ uv run python -m unittest tests.test_hive_daily_bars
 
 1. 打开 **Settings → Pages**。
 2. 在 **Build and deployment** 里把 **Source** 设为 **GitHub Actions**（不要选 “Deploy from a branch”）。
-3. 把工作流合并到 `main`。改动 `site/`、这个工作流或根目录 `README.md` 的推送会跑 `pages`。`deploy` 只在 `main` 上运行。pull request 会构建站点，但不会发布。
+3. 把工作流合并到 `main`。改动 `site/`、`docs/`、这个工作流或根目录 `README.md` 的推送会跑 `pages`。`deploy` 只在 `main` 上运行。pull request 会构建站点，但不会发布。
 4. 如果第一次运行停在 `github-pages` 环境等待批准，批准那一次。发布地址是 https://runchengxie.github.io/moe_lstm/ 。
 
 如果 Source 已经是 GitHub Actions，第 2 步不用再点。npm 和 pnpm 的本地命令，以及 `/moe_lstm/` 这个 base，写在 [`site/README.md`](../site/README.md)。

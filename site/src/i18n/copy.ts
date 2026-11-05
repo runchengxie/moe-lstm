@@ -30,6 +30,9 @@ export const ui = {
   themeLight: L("浅色", "Light"),
   themeDark: L("深色", "Dark"),
   themeSystem: L("系统", "System"),
+  navLabel: L("站点", "Site"),
+  navBrief: L("简报", "Brief"),
+  navDocs: L("文档", "Docs"),
   footer: L(
     "研究脚本，不提供交易信号。仓库和本站都不放行情。",
     "A research script, with no trading signals. The repository and this site do not host market data.",
@@ -379,7 +382,7 @@ export const copy = {
   },
   missing: {
     title: L("没有这一页", "No such page"),
-    body: L("简报只有首页。", "The brief is a single page."),
+    body: L("这一页不在简报或文档里。", "This page is not in the brief or the docs."),
     home: L("回到简报", "Back to the brief"),
   },
 };

@@ -8,7 +8,7 @@ https://runchengxie.github.io/moe_lstm/
 
 Pages 工作流已随 #7 合进 `main`（`37671ab`）。上面的地址就是这份简报。
 
-Python 脚本、`pyproject.toml` / `uv.lock` 和 smoke 流程仍在仓库根目录。这个工作流只构建 `site/`。
+Python 脚本、`pyproject.toml` / `uv.lock` 和 smoke 流程仍在仓库根目录。这个工作流只构建 `site/`。构建时会读取仓库根目录的 `docs/`，把说明页放在 `/moe_lstm/docs/`，仍然是同一次 Pages 发布。
 
 ## 本地预览
 
@@ -58,7 +58,7 @@ pnpm preview
 
 1. 打开仓库的 **Settings → Pages**。
 2. 在 **Build and deployment** 里，把 **Source** 设为 **GitHub Actions**。不要选 “Deploy from a branch”。
-3. 工作流已经在 `main` 上。之后的推送若改到 `site/`、这个工作流或根 `README.md`，就会跑 `pages`。也可以在 Actions 里手动跑 **pages**（`workflow_dispatch`）。
+3. 工作流已经在 `main` 上。之后的推送若改到 `site/`、`docs/`、这个工作流或根 `README.md`，就会跑 `pages`。也可以在 Actions 里手动跑 **pages**（`workflow_dispatch`）。
 4. 第一次部署若停在 `github-pages` 环境等待批准，由仓库管理员批准那一次。成功后站点在 https://runchengxie.github.io/moe_lstm/ 。
 
 工作流已经在 `main` 上（#7，`37671ab`）。撰写 #7 时 Source 已经是 GitHub Actions，因此第 2 步多半不用再点。若以后有人把 Source 改回某个分支，再按第 2 步改回来。
@@ -68,6 +68,8 @@ pnpm preview
 ## 内容从哪来
 
 文案在 `src/i18n/copy.ts`，中英文字段写在一起。页面描述脚本、已经在 `main` 上的改动，以及还没做的两件事（`src/moe_lstm/` 和 quant-backtest-engine）。不记录任何一次回测数字，也不放行情。
+
+文档页读取仓库根目录 `docs/` 里的中英 Markdown（环境、数据、训练、CI），不另起一套文案。
 
 ---
 
@@ -81,7 +83,7 @@ https://runchengxie.github.io/moe_lstm/
 
 The Pages workflow is already on `main` with #7 (`37671ab`). That address is this brief.
 
-The Python script, `pyproject.toml` / `uv.lock`, and the smoke workflow stay at the repository root. This workflow builds `site/` only.
+The Python script, `pyproject.toml` / `uv.lock`, and the smoke workflow stay at the repository root. This workflow builds `site/` only. The build reads the repository `docs/` folder and serves those pages at `/moe_lstm/docs/`, in the same Pages deploy.
 
 ## Local preview
 
@@ -126,7 +128,7 @@ Deploy uses the official `actions/upload-pages-artifact` and `actions/deploy-pag
 
 1. Open **Settings → Pages**.
 2. Under **Build and deployment**, set **Source** to **GitHub Actions**. Leave “Deploy from a branch” unselected.
-3. The workflow is already on `main`. A later push that changes `site/`, this workflow, or the root `README.md` runs `pages`. **workflow_dispatch** on the Actions tab runs it by hand.
+3. The workflow is already on `main`. A later push that changes `site/`, `docs/`, this workflow, or the root `README.md` runs `pages`. **workflow_dispatch** on the Actions tab runs it by hand.
 4. If the first deploy waits for approval on the `github-pages` environment, a repository admin approves that run. The site is then https://runchengxie.github.io/moe_lstm/ .
 
 The workflow is already on `main` (#7, `37671ab`). When #7 was written, Source was already GitHub Actions, so step 2 is likely already done. If Source is later switched back to a branch, set it to GitHub Actions again.
@@ -136,3 +138,5 @@ The workflow is already on `main` (#7, `37671ab`). When #7 was written, Source w
 ## Where the words live
 
 Copy is in `src/i18n/copy.ts`, with Chinese and English on the same fields. The page describes the script, what is already on `main`, and the two items that are not done yet (`src/moe_lstm/` and quant-backtest-engine). It records no backtest figures and hosts no market data.
+
+The docs routes read the bilingual Markdown in the repository `docs/` folder (setup, data, training, CI). They do not keep a second copy of that text.
