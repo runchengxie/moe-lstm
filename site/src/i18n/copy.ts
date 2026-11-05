@@ -8,9 +8,13 @@ export const L = (zh: string, en: string): Localized => ({ zh, en });
 
 export const links = {
   repo: "https://github.com/runchengxie/moe_lstm",
+  pr1: "https://github.com/runchengxie/moe_lstm/pull/1",
   pr2: "https://github.com/runchengxie/moe_lstm/pull/2",
   pr3: "https://github.com/runchengxie/moe_lstm/pull/3",
   pr4: "https://github.com/runchengxie/moe_lstm/pull/4",
+  pr5: "https://github.com/runchengxie/moe_lstm/pull/5",
+  pr6: "https://github.com/runchengxie/moe_lstm/pull/6",
+  pr7: "https://github.com/runchengxie/moe_lstm/pull/7",
   engine: "https://github.com/runchengxie/quant-backtest-engine",
   pages: "https://runchengxie.github.io/moe_lstm/",
   defaultCsv:
@@ -32,12 +36,14 @@ export const ui = {
   ),
 };
 
+const merged = L("已合并", "Merged");
+
 export const copy = {
   meta: {
     title: L("moe_lstm · 项目简报", "moe_lstm · project brief"),
     description: L(
-      "moe_lstm 的公开项目简报：日频涨跌混合专家 LSTM、数据契约，以及 2026-11-05 仍开放的 pull request。研究脚本，不是交易系统。",
-      "Public brief for moe_lstm: a daily up/down mixture-of-experts LSTM, the data contract, and the pull requests still open on 2026-11-05. A research script, not a trading system.",
+      "moe_lstm 的公开项目简报：日频涨跌混合专家 LSTM、数据契约，以及已经在 main 上的 uv、Hive Parquet 和本站。研究脚本，不是交易系统。",
+      "Public brief for moe_lstm: a daily up/down mixture-of-experts LSTM, the data contract, and what is already on main: uv, Hive Parquet, and this site. A research script, not a trading system.",
     ),
   },
   hero: {
@@ -59,14 +65,14 @@ export const copy = {
       {
         tone: "meta" as const,
         text: L(
-          "Python 3.12，安装解析到 TensorFlow 2.21.0",
-          "Python 3.12, resolve found TensorFlow 2.21.0",
+          "Python 3.12，uv 锁定 TensorFlow 2.21.0",
+          "Python 3.12, uv lock pins TensorFlow 2.21.0",
         ),
       },
     ],
     asOf: L(
-      "状态写于 2026-11-05（Asia/Shanghai），对应 main 上已合并的 PR #1（`0309d55`）。这几份开放 PR 之后有没有合并，以 GitHub 上的页面为准。",
-      "Written 2026-11-05 (Asia/Shanghai), against main after merged PR #1 (`0309d55`). GitHub is the record of whether these open pull requests later merged.",
+      "写于 2026-11-05（Asia/Shanghai），对应 main 的 `37671ab`（#7 的 squash）。#1、#2、#3、#4、#6、#7 已合并。远程只有 `main`。#5 已关闭，没有合并。",
+      "Written 2026-11-05 (Asia/Shanghai), against main at `37671ab` (the squash of #7). #1, #2, #3, #4, #6, and #7 are merged. The only remote branch is `main`. #5 was closed and was not merged.",
     ),
   },
   what: {
@@ -97,15 +103,15 @@ export const copy = {
       {
         term: L("划分", "Split"),
         detail: L(
-          "按时间取前 80% 的窗口训练、后 20% 测试，最多 50 个 epoch，batch 16，早停 patience 5。当前 main 把测试段同时用作早停的验证集，标准化也在全样本上拟合。PR #3 改的就是这类评估问题，撰写时仍开放。",
-          "The first 80% of windows train and the last 20% test, for up to 50 epochs, batch size 16, and early-stopping patience 5. On current main the test windows are also the early-stopping validation set, and scaling is fit on the full sample. PR #3 is the open change for that evaluation behavior.",
+          "按时间取前 80% 的窗口训练、后 20% 测试，最多 50 个 epoch，batch 16，早停 patience 5。训练段的最后 20% 是早停验证集，至少留一个验证窗口。`MinMaxScaler` 只在拟合窗口的特征行上拟合。这是已合并的 #3 留在 main 上的行为。",
+          "The first 80% of windows train and the last 20% test, for up to 50 epochs, batch size 16, and early-stopping patience 5. The last 20% of the training block is the early-stopping validation set, with at least one validation window. `MinMaxScaler` is fit only on the feature rows of the fit windows. That is what merged #3 left on main.",
         ),
       },
       {
         term: L("运行时", "Runtime"),
         detail: L(
-          "根 README 写明在 Python 3.12 上核对过。2026-11-05 一次全新安装解析到 TensorFlow 2.21.0、pandas 3.1.1、scikit-learn 1.9.1。main 的 `requirements.txt` 仍是下界；精确钉版本在 PR #2，撰写时仍开放。",
-          "The root README records a check on Python 3.12. A fresh install on 2026-11-05 resolved TensorFlow 2.21.0, pandas 3.1.1, and scikit-learn 1.9.1. `requirements.txt` on main is still lower bounds. Exact pins are the open PR #2.",
+          "根 README 写明在 Python 3.12 上核对过。安装用 uv 0.13.7：`uv sync` 读取 `pyproject.toml` 和 `uv.lock`。直接依赖钉到 TensorFlow 2.21.0、Keras 3.15.1、pandas 3.1.1、numpy 2.5.4、scikit-learn 1.9.1、MiniSom 2.3.6、matplotlib 3.11.2、seaborn 0.13.2、pyarrow 26.0.1。`requirements.txt` 已随 #6 删除。smoke 和 unittest 的 CI 使用 `uv sync --frozen`。",
+          "The root README records a check on Python 3.12. Install with uv 0.13.7: `uv sync` reads `pyproject.toml` and `uv.lock`. Direct pins are TensorFlow 2.21.0, Keras 3.15.1, pandas 3.1.1, numpy 2.5.4, scikit-learn 1.9.1, MiniSom 2.3.6, matplotlib 3.11.2, seaborn 0.13.2, and pyarrow 26.0.1. `requirements.txt` was removed in #6. Smoke and unit CI run `uv sync --frozen`.",
         ),
       },
     ],
@@ -123,8 +129,8 @@ export const copy = {
       {
         name: L("OHLCV", "OHLCV"),
         detail: L(
-          "从 `MOE_DATA_CSV` 读入 `Date`、`Open`、`High`、`Low`、`Close/Last`。未设置时用脚本里的默认 URL；该 URL 在 2026-11-05 返回 HTTP 404。",
-          "Read `Date`, `Open`, `High`, `Low`, and `Close/Last` from `MOE_DATA_CSV`. Unset, the script uses the default URL in the file. That URL returned HTTP 404 on 2026-11-05.",
+          "设置了 `MOE_DATA_PARQUET` 时读取 Hive 分钟 Parquet，并聚合成日线；还要设置 `MOE_SYMBOL`。未设置时从 `MOE_DATA_CSV` 读入 `Date`、`Open`、`High`、`Low`、`Close/Last`。CSV 也未设置时用脚本里的默认 URL；该 URL 在 2026-11-05 返回 HTTP 404。",
+          "When `MOE_DATA_PARQUET` is set, the script reads Hive minute Parquet and rolls it up to daily bars, and `MOE_SYMBOL` is required. Otherwise it reads `Date`, `Open`, `High`, `Low`, and `Close/Last` from `MOE_DATA_CSV`. If that is also unset, it uses the default URL in the file. That URL returned HTTP 404 on 2026-11-05.",
         ),
       },
       {
@@ -157,30 +163,30 @@ export const copy = {
       },
     ],
     note: L(
-      "根 README 写明这三次之后，还会用手工特征集再以名称 MOE 训练一次，所以当前 main 一共训练四次。相关热力图只供查看。无界面时建议 `MPLBACKEND=Agg`；当前 main 仍会调用 `plt.show()`。",
-      "The root README notes a fourth fit after those three: the manual set is trained again under the name MOE, so current main trains four times. The correlation heatmap is for inspection. On a machine without a display, set `MPLBACKEND=Agg`. Current main still calls `plt.show()`.",
+      "一次运行训练三个模型：手工特征、K-Means 子集、SOM 子集。相关热力图只供查看，仍使用全样本。`MPLBACKEND=Agg` 时画出图后关闭，不调用 `plt.show()`。交互式后端仍会调用 `plt.show()`。",
+      "One run fits three models: manual features, the K-Means subset, and the SOM subset. The correlation heatmap is for inspection and still uses the full sample. With `MPLBACKEND=Agg` the script draws the figures and closes them, and does not call `plt.show()`. An interactive backend still calls `plt.show()`.",
     ),
   },
   data: {
     index: "03",
     heading: L("数据", "Data"),
     intro: L(
-      "行情放在仓库外面，用环境变量指过去。价格列要已经是数字：美元符号或千分位会让滚动计算失败。",
-      "Keep prices outside the repository and point at them with an environment variable. Price columns must already be numbers. A dollar sign or thousands separator breaks the rolling calculations.",
+      "行情放在仓库外面。主路径是 Hive 分钟 Parquet；未设置时回退到 CSV。价格列要已经是数字：美元符号或千分位会让滚动计算失败。",
+      "Keep prices outside the repository. Hive minute Parquet is the primary path; CSV is the fallback when that root is unset. Price columns must already be numbers. A dollar sign or thousands separator breaks the rolling calculations.",
     ),
     env: [
       {
-        name: "MOE_DATA_CSV",
+        name: "MOE_DATA_PARQUET",
         detail: L(
-          "本地 CSV 路径。不设置则请求下面的默认 URL。撰写时该 URL 返回 HTTP 404（`quant_practice_3` 已不在）。",
-          "Path to a local CSV. Unset, the script requests the default URL below. At write time that URL returned HTTP 404 (`quant_practice_3` is gone).",
+          "已在 main（#4）。Hive 分钟 Parquet 根目录。需要同时设置 `MOE_SYMBOL`；一个代码有多份 security 时再设置 `MOE_SECURITY`。设置之后优先于 `MOE_DATA_CSV`。分钟线聚合成脚本已有的日线列。不设置时仍走 CSV。",
+          "On main since #4. Hive minute-Parquet root. Set `MOE_SYMBOL` with it, and `MOE_SECURITY` when one ticker has more than one security hash. When set, it wins over `MOE_DATA_CSV`. Minutes are rolled up to the daily columns the script already uses. Unset, the script still reads CSV.",
         ),
       },
       {
-        name: "MOE_DATA_PARQUET",
+        name: "MOE_DATA_CSV",
         detail: L(
-          "PR #4 增加的 Hive 分钟 Parquet 根目录。撰写时这只在开放的 PR #4 里。需要同时设置 `MOE_SYMBOL`；一个代码有多份 security 时再设置 `MOE_SECURITY`。分钟线会聚合成脚本已有的日线列。CSV 路径还保留。",
-          "Hive minute-Parquet root added by open PR #4. At write time this lives only on that pull request. Set `MOE_SYMBOL` with it, and `MOE_SECURITY` when one ticker has more than one security hash. Minutes are rolled up to the daily columns the script already uses. The CSV path remains.",
+          "Parquet 根目录未设置时的日频 CSV，可以是本地路径或 `pandas.read_csv` 能打开的 URL。这一项和 Parquet 都未设置时，脚本请求下面的默认 URL。撰写 README 时该 URL 返回 HTTP 404（`quant_practice_3` 已不在）。",
+          "Daily CSV used when the Parquet root is unset. A local path or any URL `pandas.read_csv` can open. If this and the Parquet root are both unset, the script requests the default URL below. When the README was written that URL returned HTTP 404 (`quant_practice_3` is gone).",
         ),
       },
     ],
@@ -188,8 +194,8 @@ export const copy = {
       {
         name: "Date",
         rule: L(
-          "只用 `%m/%d/%Y`，例如 `01/13/2020`。ISO 日期会解析失败。",
-          "Parsed only as `%m/%d/%Y`, for example `01/13/2020`. ISO dates fail to parse.",
+          "CSV 只用 `%m/%d/%Y`，例如 `01/13/2020`。ISO 日期会解析失败。",
+          "CSV dates are parsed only as `%m/%d/%Y`, for example `01/13/2020`. ISO dates fail to parse.",
         ),
       },
       {
@@ -213,105 +219,160 @@ export const copy = {
       },
     ],
     columnCaption: L("CSV 列", "CSV columns"),
-    runCaption: L("本地运行", "Run locally"),
+    parquetRun: L("Hive 分钟线", "Hive minute bars"),
+    csvRun: L("CSV 回退", "CSV fallback"),
     runNote: L(
-      "依赖的下界在仓库根目录的 `requirements.txt`。更完整的说明在根 README。",
-      "Lower-bound dependencies live in the repository root `requirements.txt`. The root README has the longer setup note.",
+      "`uv sync` 按 `pyproject.toml` 和 `uv.lock` 安装。smoke 和 unittest 的 CI 使用 `uv sync --frozen`。仓库里没有 `requirements.txt`。更完整的说明在根 README。",
+      "`uv sync` installs from `pyproject.toml` and `uv.lock`. Smoke and unit CI use `uv sync --frozen`. There is no `requirements.txt`. The root README has the longer setup note.",
     ),
     vendor: L(
-      "根 README 说明 AlgoSeek 的美股分钟线要用另一套列名，映射放在单独的文件里，脚本按上面的五列读取。PR #4 是按 Hive Parquet 聚合成日线的那条改动。",
-      "The root README states that AlgoSeek US equity minute bars use another schema. Map them in a separate file; the script reads the five columns above. PR #4 is the change that aggregates Hive Parquet into daily bars.",
+      "根 README 说明 AlgoSeek 的美股 bar 不是上面的 CSV 列名，要在单独的文件里映射成这五列。Hive 分钟 Parquet 是另一条已在 main 上的路径：加载器按分钟字段聚合成这些日线列。未设置 Parquet 根目录时才走 CSV。",
+      "The root README states that AlgoSeek US equity bars are not the CSV schema above. Map them onto these five columns in a separate file. Hive minute Parquet is a separate path already on main: the loader rolls minute fields up to these daily columns. CSV is used only when the Parquet root is unset.",
     ),
     defaultUrl: L(
-      "默认 URL，撰写时返回 HTTP 404：",
-      "Default URL, HTTP 404 at write time:",
+      "默认 CSV URL，撰写 README 时返回 HTTP 404：",
+      "Default CSV URL, HTTP 404 when the README was written:",
     ),
   },
-  prs: {
+  merged: {
     index: "04",
-    heading: L("开放的 pull request", "Open pull requests"),
+    heading: L("已在 main", "On main"),
     intro: L(
-      "下面三份在撰写时都是开放的。标题用的是 GitHub 上的英文原题。",
-      "All three were open at write time. Titles are the English titles on GitHub.",
+      "按编号列出。已合并的都是 squash 进 main。远程分支只有 `main`。这批没有仍开着的 pull request。标题是 GitHub 上的英文原题。",
+      "Listed by number. Merged items were squash-merged into main. The only remote branch is `main`. No pull request from this batch is still open. Titles are the English titles on GitHub.",
     ),
     items: [
+      {
+        n: "#1",
+        href: links.pr1,
+        title: "Fix fresh-run blockers in the MoE-LSTM script",
+        state: merged,
+        base: L("squash `0309d55`", "squash `0309d55`"),
+        body: L(
+          "运维健康：让本地 CSV 能够启动训练。",
+          "Ops health: a local CSV can start training.",
+        ),
+      },
       {
         n: "#2",
         href: links.pr2,
         title: "Pin dependency versions and add a one-epoch CI smoke",
-        state: L("开放 · 撰写时", "Open at write time"),
-        base: L("基分支 main", "Base: main"),
+        state: merged,
+        base: L("squash `0acab47`", "squash `0acab47`"),
         body: L(
-          "把 2026-11-05 在 Python 3.12 上解析到的版本钉死：TensorFlow 2.21.0、Keras 3.15.1、pandas 3.1.1、numpy 2.5.4、scikit-learn 1.9.1、MiniSom 2.3.6、matplotlib 3.11.2、seaborn 0.13.2。另加一轮 epoch 的 GitHub Actions smoke，夹具是合成 K 线。撰写时 smoke 检查为通过。",
-          "Pins the versions a clean Python 3.12 resolve produced on 2026-11-05: TensorFlow 2.21.0, Keras 3.15.1, pandas 3.1.1, numpy 2.5.4, scikit-learn 1.9.1, MiniSom 2.3.6, matplotlib 3.11.2, and seaborn 0.13.2. Adds a one-epoch GitHub Actions smoke on a synthetic bar fixture. The smoke check was green at write time.",
+          "钉住直接依赖，并加上一轮 epoch 的 smoke，夹具是合成 K 线。这些钉版本现由 #6 放在 `pyproject.toml` 与 `uv.lock`，并包含 pyarrow。",
+          "Pins the direct dependencies and adds a one-epoch smoke on a synthetic bar fixture. Those pins now live in `pyproject.toml` and `uv.lock` via #6, and include pyarrow.",
         ),
       },
       {
         n: "#3",
         href: links.pr3,
         title: "Fix backtest alignment, leakage, and sync the docs",
-        state: L("开放 · 撰写时", "Open at write time"),
-        base: L("叠在 #2 上，基分支是 pin 依赖那条分支", "Stacked on #2; base is the pin-deps branch"),
+        state: merged,
+        base: L("squash `2b56c06`", "squash `2b56c06`"),
         body: L(
-          "修正回测对齐和信息泄漏，并让中英文说明与实际跑起来的代码一致。撰写时 smoke 和 unittest 为通过。建议先合并 #2，再合并 #3。",
-          "Corrects backtest alignment and leakage, and rewrites the Chinese and English docs so they match the code that runs. Smoke and unittest were green at write time. Merge #2, then #3.",
+          "修正回测对齐和信息泄漏，补上测试，并让中英文说明与代码一致。上文的切分和缩放就是这份改动。准确的双语文档也是从这里进 main 的。",
+          "Corrects backtest alignment and leakage, adds tests, and syncs the Chinese and English docs to the code. The split and scaling above are this change. The accurate bilingual docs entered main here.",
         ),
       },
       {
         n: "#4",
         href: links.pr4,
         title: "Load daily bars from Hive minute Parquet",
-        state: L("开放 · 撰写时", "Open at write time"),
-        base: L("基分支 main，可与 #2 并列合并", "Base: main; can merge beside #2"),
+        state: merged,
+        base: L("squash `d47ba61`", "squash `d47ba61`"),
         body: L(
-          "从 main 拉出。读取 Hive 分钟 Parquet（`MOE_DATA_PARQUET`、`MOE_SYMBOL`，必要时 `MOE_SECURITY`）并聚合成日线。撰写时 parquet-loader 检查为通过。它和 #2 都会改 `requirements.txt`：保留 #2 的钉版本，并加上 pyarrow。",
-          "Branched from main. Reads Hive minute Parquet (`MOE_DATA_PARQUET`, `MOE_SYMBOL`, and `MOE_SECURITY` when needed) and aggregates it to daily bars. The parquet-loader check was green at write time. It and #2 both edit `requirements.txt`: keep #2's pins and add pyarrow.",
+          "读取 Hive 分钟 Parquet（`MOE_DATA_PARQUET`、`MOE_SYMBOL`，必要时 `MOE_SECURITY`）并聚合成日线。CSV 仍是回退。",
+          "Reads Hive minute Parquet (`MOE_DATA_PARQUET`, `MOE_SYMBOL`, and `MOE_SECURITY` when needed) and aggregates it to daily bars. CSV remains the fallback.",
+        ),
+      },
+      {
+        n: "#5",
+        href: links.pr5,
+        title: "Add Simplified Chinese README (README.zh-CN.md)",
+        state: L("已关闭", "Closed"),
+        base: L("未合并", "Not merged"),
+        body: L(
+          "已关闭，视为被取代。准确的中英文档随 #3 进入 main。根 README 顶部的语言切换随 #6 进入 main。",
+          "Closed as superseded. The accurate bilingual docs landed with #3. The language switcher on the root READMEs landed with #6.",
+        ),
+      },
+      {
+        n: "#6",
+        href: links.pr6,
+        title: "Switch dependency management from pip to uv",
+        state: merged,
+        base: L("squash `7b8f839`", "squash `7b8f839`"),
+        body: L(
+          "安装从 pip 换成 uv：`pyproject.toml` 加 `uv.lock`，`requirements.txt` 删除。运行是 `uv sync` 和 `uv run python moe_lstm.py`。smoke 与 unittest 的 CI 使用 `uv sync --frozen`。根 README 的语言切换也在这份里。",
+          "Switches installs from pip to uv: `pyproject.toml` plus `uv.lock`, and `requirements.txt` removed. Run with `uv sync` and `uv run python moe_lstm.py`. Smoke and unit CI use `uv sync --frozen`. The language switcher on the root READMEs is in this change.",
+        ),
+      },
+      {
+        n: "#7",
+        href: links.pr7,
+        title: "Add a bilingual Astro brief and GitHub Pages deploy",
+        state: merged,
+        base: L("squash `37671ab`", "squash `37671ab`"),
+        body: L(
+          "`site/` 下的这份 Astro 简报，以及 GitHub Pages 工作流。地址就是本页。",
+          "This Astro brief under `site/`, and the GitHub Pages workflow. This page is that site.",
         ),
       },
     ],
-    order: L(
-      "建议的合并顺序：先 #2，再 #3。#4 基于 main，可以和 #2 并列合并。",
-      "Suggested merge order: #2, then #3. #4 is based on main and can merge beside #2.",
+    note: L(
+      "还没做的只有下一节的两件事。",
+      "The only work still planned is the two items in the next section.",
     ),
   },
-  links: {
+  next: {
     index: "05",
+    heading: L("还没做", "Not done yet"),
+    intro: L("这两件不在 main 上。", "These two are not on main."),
+    items: [
+      {
+        term: L("`src/moe_lstm/`", "`src/moe_lstm/`"),
+        detail: L(
+          "把根目录脚本拆成这个包。还没有做。",
+          "Split the root script into this package. Not done.",
+        ),
+      },
+      {
+        term: L("quant-backtest-engine", "quant-backtest-engine"),
+        detail: L(
+          "模型只输出信号或权重。成交和账本由这个库负责。还没有接上。",
+          "The model would emit signals or weights. Fills and the ledger would belong to this library. Not wired up.",
+        ),
+        href: links.engine,
+      },
+    ],
+  },
+  links: {
+    index: "06",
     heading: L("链接", "Links"),
     items: [
       {
         href: links.repo,
         label: L("runchengxie/moe_lstm", "runchengxie/moe_lstm"),
-        note: L("本仓库。脚本、依赖和运行说明。", "This repository. Script, dependencies, and how to run it."),
-      },
-      {
-        href: links.pr2,
-        label: L("PR #2", "PR #2"),
-        note: L("钉依赖，并加一轮 epoch 的 smoke。", "Pin dependencies and add a one-epoch smoke."),
-      },
-      {
-        href: links.pr3,
-        label: L("PR #3", "PR #3"),
-        note: L("回测对齐、泄漏和文档。叠在 #2 上。", "Backtest alignment, leakage, and docs. Stacked on #2."),
-      },
-      {
-        href: links.pr4,
-        label: L("PR #4", "PR #4"),
-        note: L("Hive Parquet 日线。从 main 拉出。", "Hive Parquet daily bars. Branched from main."),
+        note: L(
+          "本仓库。脚本、`pyproject.toml`、`uv.lock` 和运行说明。",
+          "This repository. Script, `pyproject.toml`, `uv.lock`, and how to run it.",
+        ),
       },
       {
         href: links.engine,
         label: L("quant-backtest-engine", "quant-backtest-engine"),
         note: L(
-          "独立的 Rust 回测库和命令行，留作以后的回测参考。本脚本的 `requirements.txt` 只列 Python 包。",
-          "A separate Rust backtest library and CLI, kept as a future backtest reference. This script's `requirements.txt` lists the Python packages only.",
+          "计划中的回测库，还没有接上。模型将输出信号或权重，由它处理成交和账本。本仓库的依赖在 `pyproject.toml` 和 `uv.lock`。",
+          "The planned backtest library. It is not wired up. The model would emit signals or weights; it would handle fills and the ledger. This repository's dependencies are in `pyproject.toml` and `uv.lock`.",
         ),
       },
       {
         href: links.pages,
         label: L("GitHub Pages", "GitHub Pages"),
         note: L(
-          "启用 Actions 部署并在 main 上成功发布之后的地址。撰写时该地址返回 HTTP 404。",
-          "Address after a successful Actions deploy on main. It returned HTTP 404 at write time.",
+          "本页。站点和工作流已随 #7 进入 main。",
+          "This page. The site and the workflow landed on main with #7.",
         ),
       },
     ],
@@ -323,6 +384,12 @@ export const copy = {
   },
 };
 
-export const runCommand = `export MOE_DATA_CSV=/path/to/bars.csv
+export const parquetCommand = `uv sync
+export MOE_DATA_PARQUET=/path/to/dataset-root
+export MOE_SYMBOL=AAPL
 export MPLBACKEND=Agg
-python moe_lstm.py`;
+uv run python moe_lstm.py`;
+
+export const csvCommand = `export MOE_DATA_CSV=/path/to/bars.csv
+export MPLBACKEND=Agg
+uv run python moe_lstm.py`;

@@ -2,11 +2,11 @@
 
 `site/` 是一个很小的 Astro 静态站，用来公开介绍仓库根目录的研究脚本。页面默认中文，可以切到英文；颜色跟随系统的 `prefers-color-scheme`，也可以改成浅色或深色。
 
-站点地址（在 `main` 上用 GitHub Actions 成功发布之后）：
+站点地址：
 
 https://runchengxie.github.io/moe_lstm/
 
-撰写时（2026-11-05）这个地址返回 HTTP 404，因为还没有任何一次 Pages 部署。仓库的 Pages API 当时已经是 `build_type: workflow`（Source 为 GitHub Actions）。
+Pages 工作流已随 #7 合进 `main`（`37671ab`）。上面的地址就是这份简报。
 
 Python 脚本、`pyproject.toml` / `uv.lock` 和 smoke 流程仍在仓库根目录。这个工作流只构建 `site/`。
 
@@ -58,16 +58,16 @@ pnpm preview
 
 1. 打开仓库的 **Settings → Pages**。
 2. 在 **Build and deployment** 里，把 **Source** 设为 **GitHub Actions**。不要选 “Deploy from a branch”。
-3. 把包含该工作流的提交合并到 `main`。推送若改到 `site/`、这个工作流或根 `README.md`，就会跑 `pages`。也可以在 Actions 里手动跑 **pages**（`workflow_dispatch`）。
+3. 工作流已经在 `main` 上。之后的推送若改到 `site/`、这个工作流或根 `README.md`，就会跑 `pages`。也可以在 Actions 里手动跑 **pages**（`workflow_dispatch`）。
 4. 第一次部署若停在 `github-pages` 环境等待批准，由仓库管理员批准那一次。成功后站点在 https://runchengxie.github.io/moe_lstm/ 。
 
-2026-11-05 这次查看里，Source 已经是 GitHub Actions，因此第 2 步多半不用再点。需要做的是把本工作流合并进 `main`，等 `pages` 成功。若以后有人把 Source 改回某个分支，再按第 2 步改回来。
+工作流已经在 `main` 上（#7，`37671ab`）。撰写 #7 时 Source 已经是 GitHub Actions，因此第 2 步多半不用再点。若以后有人把 Source 改回某个分支，再按第 2 步改回来。
 
 `site` 和 `base` 写死为这个仓库的项目 Pages 地址。仓库若改名或换主人，要一起改 `site/astro.config.mjs`。
 
 ## 内容从哪来
 
-文案在 `src/i18n/copy.ts`，中英文字段写在一起。页面只描述脚本和撰写时的开放 PR，不记录任何一次回测数字，也不放行情。
+文案在 `src/i18n/copy.ts`，中英文字段写在一起。页面描述脚本、已经在 `main` 上的改动，以及还没做的两件事（`src/moe_lstm/` 和 quant-backtest-engine）。不记录任何一次回测数字，也不放行情。
 
 ---
 
@@ -75,11 +75,11 @@ pnpm preview
 
 `site/` is a small Astro static site for the study script at the repository root. Chinese is the default; English is a switch on the page. Color follows `prefers-color-scheme`, with an explicit light, dark, or system choice.
 
-Live URL after a successful GitHub Actions deploy on `main`:
+Live URL:
 
 https://runchengxie.github.io/moe_lstm/
 
-On 2026-11-05 that URL returned HTTP 404 because nothing had been published. The Pages API already reported `build_type: workflow` (Source: GitHub Actions).
+The Pages workflow is already on `main` with #7 (`37671ab`). That address is this brief.
 
 The Python script, `pyproject.toml` / `uv.lock`, and the smoke workflow stay at the repository root. This workflow builds `site/` only.
 
@@ -126,13 +126,13 @@ Deploy uses the official `actions/upload-pages-artifact` and `actions/deploy-pag
 
 1. Open **Settings → Pages**.
 2. Under **Build and deployment**, set **Source** to **GitHub Actions**. Leave “Deploy from a branch” unselected.
-3. Merge a commit that contains this workflow into `main`. A push that changes `site/`, this workflow, or the root `README.md` runs `pages`. **workflow_dispatch** on the Actions tab runs it by hand.
+3. The workflow is already on `main`. A later push that changes `site/`, this workflow, or the root `README.md` runs `pages`. **workflow_dispatch** on the Actions tab runs it by hand.
 4. If the first deploy waits for approval on the `github-pages` environment, a repository admin approves that run. The site is then https://runchengxie.github.io/moe_lstm/ .
 
-On 2026-11-05 the Source was already GitHub Actions, so step 2 is likely already done. Merging this workflow to `main` and waiting for a green `pages` run is what publishes the URL. If Source is later switched back to a branch, set it to GitHub Actions again.
+The workflow is already on `main` (#7, `37671ab`). When #7 was written, Source was already GitHub Actions, so step 2 is likely already done. If Source is later switched back to a branch, set it to GitHub Actions again.
 
 `site` and `base` are fixed to this repository’s project Pages URL. If the repository is renamed or moved, change both in `site/astro.config.mjs`.
 
 ## Where the words live
 
-Copy is in `src/i18n/copy.ts`, with Chinese and English on the same fields. The page describes the script and the pull requests that were open at write time. It records no backtest figures and hosts no market data.
+Copy is in `src/i18n/copy.ts`, with Chinese and English on the same fields. The page describes the script, what is already on `main`, and the two items that are not done yet (`src/moe_lstm/` and quant-backtest-engine). It records no backtest figures and hosts no market data.

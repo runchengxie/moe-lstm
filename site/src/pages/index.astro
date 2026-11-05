@@ -1,7 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import Tx from "../components/Tx.astro";
-import { copy, links, runCommand } from "../i18n/copy";
+import { copy, csvCommand, links, parquetCommand } from "../i18n/copy";
 ---
 
 <Base canonical>
@@ -109,9 +109,13 @@ import { copy, links, runCommand } from "../i18n/copy";
         </div>
         <p><Tx text={copy.data.vendor} /></p>
         <p>
-          <Tx text={copy.data.runCaption} />
+          <Tx text={copy.data.parquetRun} />
         </p>
-        <pre><code>{runCommand}</code></pre>
+        <pre><code>{parquetCommand}</code></pre>
+        <p>
+          <Tx text={copy.data.csvRun} />
+        </p>
+        <pre><code>{csvCommand}</code></pre>
         <p class="note"><Tx text={copy.data.runNote} /></p>
         <p>
           <Tx text={copy.data.defaultUrl} />
@@ -121,14 +125,14 @@ import { copy, links, runCommand } from "../i18n/copy";
       </div>
     </section>
 
-    <section class="block" id="prs" aria-labelledby="prs-heading">
-      <p class="sec-index">{copy.prs.index}</p>
+    <section class="block" id="merged" aria-labelledby="merged-heading">
+      <p class="sec-index">{copy.merged.index}</p>
       <div>
-        <h2 id="prs-heading"><Tx text={copy.prs.heading} /></h2>
-        <p class="intro"><Tx text={copy.prs.intro} /></p>
+        <h2 id="merged-heading"><Tx text={copy.merged.heading} /></h2>
+        <p class="intro"><Tx text={copy.merged.intro} /></p>
         <div class="pr-list">
           {
-            copy.prs.items.map((item) => (
+            copy.merged.items.map((item) => (
               <article class="pr">
                 <p class="pr-n"><a href={item.href}>{item.n}</a></p>
                 <div>
@@ -144,7 +148,31 @@ import { copy, links, runCommand } from "../i18n/copy";
             ))
           }
         </div>
-        <p class="callout"><Tx text={copy.prs.order} /></p>
+        <p class="callout"><Tx text={copy.merged.note} /></p>
+      </div>
+    </section>
+
+    <section class="block" id="next" aria-labelledby="next-heading">
+      <p class="sec-index">{copy.next.index}</p>
+      <div>
+        <h2 id="next-heading"><Tx text={copy.next.heading} /></h2>
+        <p class="intro"><Tx text={copy.next.intro} /></p>
+        <dl class="facts">
+          {
+            copy.next.items.map((item) => (
+              <div>
+                <dt>
+                  {"href" in item && item.href ? (
+                    <a href={item.href}><Tx text={item.term} /></a>
+                  ) : (
+                    <Tx text={item.term} />
+                  )}
+                </dt>
+                <dd><Tx text={item.detail} /></dd>
+              </div>
+            ))
+          }
+        </dl>
       </div>
     </section>
 
