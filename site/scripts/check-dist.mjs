@@ -103,6 +103,29 @@ if (!index.includes("/moe_lstm/docs/")) {
   console.error("check-dist: home page does not link to /moe_lstm/docs/");
   process.exit(1);
 }
+const homeNeedles = [
+  "coming once quant-backtest-engine is wired",
+  "这些格子是占位",
+  "data-value=\"empty\"",
+  "data-chart=\"equity\"",
+  "THRESHOLD = 0.002",
+  "MOE_DATA_PARQUET",
+];
+const missingHome = homeNeedles.filter((needle) => !index.includes(needle));
+if (missingHome.length > 0) {
+  console.error("check-dist: home page is missing:\n" + missingHome.map((item) => `  - ${item}`).join("\n"));
+  process.exit(1);
+}
+const emptyCells = [...index.matchAll(/data-value="empty"[^>]*>([^<]*)</g)].map((match) => match[1]);
+const filled = emptyCells.filter((text) => /\d/.test(text));
+if (emptyCells.length < 8 || filled.length > 0) {
+  console.error(`check-dist: expected empty metric cells, found ${emptyCells.length} cells, ${filled.length} with digits`);
+  process.exit(1);
+}
+if (!existsSync(join(dist, "changelog/index.html"))) {
+  console.error("check-dist: changelog/index.html is missing");
+  process.exit(1);
+}
 const dataHtml = readFileSync(join(dist, "docs/data/index.html"), "utf8");
 const docNeedles = [
   "Hive minute bars are the primary input",

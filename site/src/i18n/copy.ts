@@ -31,8 +31,9 @@ export const ui = {
   themeDark: L("深色", "Dark"),
   themeSystem: L("系统", "System"),
   navLabel: L("站点", "Site"),
-  navBrief: L("简报", "Brief"),
+  navHome: L("首页", "Home"),
   navDocs: L("文档", "Docs"),
+  navChangelog: L("变更", "Changelog"),
   footer: L(
     "研究脚本，不提供交易信号。仓库和本站都不放行情。",
     "A research script, with no trading signals. The repository and this site do not host market data.",
@@ -43,18 +44,18 @@ const merged = L("已合并", "Merged");
 
 export const copy = {
   meta: {
-    title: L("moe_lstm · 项目简报", "moe_lstm · project brief"),
+    title: L("moe_lstm · 回测与结构", "moe_lstm · results and architecture"),
     description: L(
-      "moe_lstm 的公开项目简报：日频涨跌混合专家 LSTM、数据契约，以及已经在 main 上的 uv、Hive Parquet 和本站。研究脚本，不是交易系统。",
-      "Public brief for moe_lstm: a daily up/down mixture-of-experts LSTM, the data contract, and what is already on main: uv, Hive Parquet, and this site. A research script, not a trading system.",
+      "MoE-LSTM 的回测位置还是占位，结构说明包括专家、门控、Hive Parquet 与 CSV 回退。研究脚本，不是交易系统。",
+      "Placeholder backtest slots for an MoE-LSTM, plus how the experts, gate, Hive Parquet path, and CSV fallback fit together. A research script, not a trading system.",
     ),
   },
   hero: {
-    kicker: L("项目简报", "Project brief"),
-    title: L("日频下一交易日涨跌的 MoE-LSTM", "A daily MoE-LSTM for the next session"),
+    kicker: L("研究脚本", "Research script"),
+    title: L("下一交易日涨跌的 MoE-LSTM", "An MoE-LSTM for the next session"),
     lede: L(
-      "三个 LSTM 专家加一个门控，判断下一交易日涨跌。手工特征、K-Means 与 SOM 三个子集各训练一次，并用多空回测对照买入持有。",
-      "Three LSTM experts and a gate call the next session up or down. Manual features, K-Means, and a SOM each supply a subset, and a long/short backtest is set against buy and hold.",
+      "三个 LSTM 专家加一个门控。首页先留出回测结果的位置，再说明数据怎么进来、窗口怎么切。",
+      "Three LSTM experts and a gate. The home page reserves a place for backtest results, then how data comes in and how the windows are split.",
     ),
     notices: [
       {
@@ -64,13 +65,6 @@ export const copy = {
       {
         tone: "limit" as const,
         text: L("仓库和本站都没有行情数据。", "No market data in the repository or on this site."),
-      },
-      {
-        tone: "meta" as const,
-        text: L(
-          "Python 3.12，uv 锁定 TensorFlow 2.21.0",
-          "Python 3.12, uv lock pins TensorFlow 2.21.0",
-        ),
       },
     ],
     asOf: L(
@@ -383,8 +377,69 @@ export const copy = {
   missing: {
     title: L("没有这一页", "No such page"),
     body: L("这一页不在简报或文档里。", "This page is not in the brief or the docs."),
-    home: L("回到简报", "Back to the brief"),
+    home: L("回到首页", "Back home"),
   },
+};
+
+export const showcase = {
+  kicker: L("结果", "Results"),
+  heading: L("回测展示", "Performance"),
+  empty: L(
+    "这些格子是占位，不是结果。这里没有存任何一次运行。数字等 quant-backtest-engine 接上之后才会放进来。本页不编造收益、夏普或任何数值。",
+    "These cells are placeholders, not results. No run is stored here. Figures are coming once quant-backtest-engine is wired. This page does not invent returns, Sharpe ratios, or any other number.",
+  ),
+  chartTitle: L("权益曲线", "Equity"),
+  chartEmpty: L("占位，没有曲线", "Placeholder, no series"),
+  axisY: L("权益", "Equity"),
+  axisX: L("测试窗口", "Test windows"),
+  tableCaption: L("脚本会打印的列。格子仍是空的。", "Columns the script prints. The cells are still empty."),
+  modelHeading: L("模型", "Model"),
+  models: [
+    { id: "manual", name: "Manual" },
+    { id: "kmeans", name: "KMeans" },
+    { id: "som", name: "SOM" },
+    { id: "buy-hold", name: "Buy & hold" },
+  ],
+  columns: [
+    { key: "accuracy", label: "Accuracy" },
+    { key: "precision", label: "Precision" },
+    { key: "recall", label: "Recall" },
+    { key: "f1", label: "F1" },
+    { key: "auc-roc", label: "AUC-ROC" },
+    { key: "total-return", label: "Total Return" },
+    { key: "max-drawdown", label: "Max Drawdown" },
+    { key: "sharpe", label: "Sharpe Ratio" },
+  ],
+  emptyMark: "—",
+  definitions: L("指标怎么定义，写在训练文档里。", "How the metrics are defined is in the training note."),
+};
+
+export const architecture = {
+  kicker: L("结构", "Architecture"),
+  heading: L("模型怎么接在一起", "How the model is put together"),
+  lede: L(
+    "三个 LSTM 专家读同一段窗口，门控只看最后一根。数据以 Hive 分钟 Parquet 为主，CSV 是回退。",
+    "Three LSTM experts read the same window, and the gate sees only the last bar. Hive minute Parquet is the primary input. CSV is the fallback.",
+  ),
+  dataHeading: L("数据路径", "Data path"),
+  data: L(
+    "设置 `MOE_DATA_PARQUET` 时，Hive 分钟线是主输入，并要有 `MOE_SYMBOL`；同一代码有多份 security 时再设 `MOE_SECURITY`。分钟线收成日线。未设置 Parquet 根目录时回退到 `MOE_DATA_CSV`。仓库里没有行情。脚本自带的远程 CSV 在 2026-11-05 返回 HTTP 404，所以 CSV 需要本地路径。",
+    "When `MOE_DATA_PARQUET` is set, Hive minute bars are the primary input, together with `MOE_SYMBOL`, and `MOE_SECURITY` when one ticker has more than one security hash. Minutes roll up to daily bars. `MOE_DATA_CSV` is the fallback when that Parquet root is unset. The repository has no market data. The default remote CSV returned HTTP 404 on 2026-11-05, so a CSV run needs a local path.",
+  ),
+  splitHeading: L("窗口、切分和缩放", "Windows, split, and scaling"),
+  split: L(
+    "回看 `LOOKBACK = 5`。按时间，前 80% 的窗口训练，后 20% 测试。训练段最后 20% 做早停验证。`MinMaxScaler` 只在拟合窗口的特征行上拟合。标签：下一根收盘到收盘收益高于 0.2%（`THRESHOLD = 0.002`）为 1，等于 0.2% 为 0。最多 50 个 epoch，batch 16，早停 patience 5。手工特征、K-Means（5 簇）、3×3 SOM 三个子集各训练一次同一结构。预测 1 做多，0 做空，对照买入持有。",
+    "Lookback is `LOOKBACK = 5`. In time order, the first 80% of windows train and the last 20% test. The last 20% of the training block is the early-stopping validation set. `MinMaxScaler` is fit only on the feature rows of the fit windows. The label is 1 when the next close-to-close return is above 0.2% (`THRESHOLD = 0.002`), and 0 when it is equal to 0.2%. Up to 50 epochs, batch size 16, early-stopping patience 5. Manual features, K-Means (5 clusters), and a 3×3 SOM each train that same architecture once. A prediction of 1 is long and 0 is short, set against buy and hold.",
+  ),
+  more: L("列约定、费用和打印的指标在文档里。", "Column rules, fees, and the printed metrics are in the docs."),
+};
+
+export const changelogCopy = {
+  title: L("变更", "Changelog"),
+  lede: L(
+    "合并顺序放在这里，不放在首页。",
+    "The merge list lives here, not on the home page.",
+  ),
 };
 
 export const parquetCommand = `uv sync

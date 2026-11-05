@@ -1,6 +1,6 @@
 # moe_lstm 项目简报
 
-`site/` 是一个很小的 Astro 静态站，用来公开介绍仓库根目录的研究脚本。页面默认中文，可以切到英文；颜色跟随系统的 `prefers-color-scheme`，也可以改成浅色或深色。
+`site/` 是一个很小的 Astro 静态站。首页是回测占位和模型结构，文档在 `/moe_lstm/docs/`，合并记录在 `/moe_lstm/changelog/`。页面默认中文，可以切到英文；颜色跟随系统的 `prefers-color-scheme`，也可以改成浅色或深色。
 
 站点地址：
 
@@ -75,7 +75,7 @@ pnpm preview
 
 # Project brief
 
-`site/` is a small Astro static site for the study script at the repository root. Chinese is the default; English is a switch on the page. Color follows `prefers-color-scheme`, with an explicit light, dark, or system choice.
+`site/` is a small Astro static site. The home page is a backtest placeholder plus the model layout. Docs are at `/moe_lstm/docs/`. The merge list is at `/moe_lstm/changelog/`. Chinese is the default; English is a switch on the page. Color follows `prefers-color-scheme`, with an explicit light, dark, or system choice.
 
 Live URL:
 

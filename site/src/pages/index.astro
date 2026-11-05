@@ -1,7 +1,11 @@
 ---
 import Base from "../layouts/Base.astro";
 import Tx from "../components/Tx.astro";
-import { copy, csvCommand, links, parquetCommand } from "../i18n/copy";
+import { architecture, copy, L, links, showcase } from "../i18n/copy";
+
+const base = import.meta.env.BASE_URL;
+const trainLink = L("训练和回测", "Training and backtest");
+const docsLink = L("文档", "Docs");
 ---
 
 <Base canonical>
@@ -19,13 +23,90 @@ import { copy, csvCommand, links, parquetCommand } from "../i18n/copy";
           ))
         }
       </ul>
-      <p class="asof"><Tx text={copy.hero.asOf} /></p>
     </header>
 
-    <section class="block" id="what" aria-labelledby="what-heading">
-      <p class="sec-index">{copy.what.index}</p>
+    <section class="block" id="results" aria-labelledby="results-heading">
+      <p class="sec-index">01</p>
       <div>
-        <h2 id="what-heading"><Tx text={copy.what.heading} /></h2>
+        <p class="kicker"><Tx text={showcase.kicker} /></p>
+        <h2 id="results-heading"><Tx text={showcase.heading} /></h2>
+        <p class="intro"><Tx text={showcase.empty} /></p>
+        <p>
+          <a href={links.engine}>quant-backtest-engine</a>
+        </p>
+
+        <figure class="chart-slot">
+          <figcaption><Tx text={showcase.chartTitle} /></figcaption>
+          <div class="chart-frame" data-chart="equity" data-value="empty">
+            <span class="chart-y"><Tx text={showcase.axisY} /></span>
+            <span class="chart-plot"><Tx text={showcase.chartEmpty} /></span>
+            <span class="chart-x"><Tx text={showcase.axisX} /></span>
+          </div>
+        </figure>
+
+        <ul class="metric-grid">
+          {
+            showcase.models.map((model) => (
+              <li class="metric-card">
+                <h3>{model.name}</h3>
+                <dl>
+                  {showcase.columns
+                    .filter((column) =>
+                      ["total-return", "max-drawdown", "sharpe"].includes(column.key),
+                    )
+                    .map((column) => (
+                      <div>
+                        <dt>{column.label}</dt>
+                        <dd data-model={model.id} data-metric={column.key} data-value="empty">
+                          {showcase.emptyMark}
+                        </dd>
+                      </div>
+                    ))}
+                </dl>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="table-wrap">
+          <table>
+            <caption><Tx text={showcase.tableCaption} /></caption>
+            <thead>
+              <tr>
+                <th scope="col"><Tx text={showcase.modelHeading} /></th>
+                {showcase.columns.map((column) => <th scope="col">{column.label}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {
+                showcase.models.map((model) => (
+                  <tr>
+                    <th scope="row">{model.name}</th>
+                    {showcase.columns.map((column) => (
+                      <td data-model={model.id} data-metric={column.key} data-value="empty">
+                        {showcase.emptyMark}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="note">
+          <Tx text={showcase.definitions} />
+          {" "}
+          <a href={`${base}docs/training/`}><Tx text={trainLink} /></a>
+        </p>
+      </div>
+    </section>
+
+    <section class="block" id="architecture" aria-labelledby="architecture-heading">
+      <p class="sec-index">02</p>
+      <div>
+        <p class="kicker"><Tx text={architecture.kicker} /></p>
+        <h2 id="architecture-heading"><Tx text={architecture.heading} /></h2>
+        <p class="intro"><Tx text={architecture.lede} /></p>
         <ol class="arch">
           {
             copy.arch.map((item) => (
@@ -37,159 +118,15 @@ import { copy, csvCommand, links, parquetCommand } from "../i18n/copy";
             ))
           }
         </ol>
-        <dl class="facts">
-          {
-            copy.what.facts.map((fact) => (
-              <div>
-                <dt><Tx text={fact.term} /></dt>
-                <dd><Tx text={fact.detail} /></dd>
-              </div>
-            ))
-          }
-        </dl>
-      </div>
-    </section>
-
-    <section class="block" id="pipeline" aria-labelledby="pipeline-heading">
-      <p class="sec-index">{copy.pipeline.index}</p>
-      <div>
-        <h2 id="pipeline-heading"><Tx text={copy.pipeline.heading} /></h2>
-        <ol class="steps">
-          {
-            copy.pipeline.steps.map((step, index) => (
-              <li>
-                <span class="step-n">{index + 1}</span>
-                <div>
-                  <h3><Tx text={step.name} /></h3>
-                  <p><Tx text={step.detail} /></p>
-                </div>
-              </li>
-            ))
-          }
-        </ol>
-        <p class="note"><Tx text={copy.pipeline.note} /></p>
-      </div>
-    </section>
-
-    <section class="block" id="data" aria-labelledby="data-heading">
-      <p class="sec-index">{copy.data.index}</p>
-      <div>
-        <h2 id="data-heading"><Tx text={copy.data.heading} /></h2>
-        <p class="intro"><Tx text={copy.data.intro} /></p>
-        <dl class="facts">
-          {
-            copy.data.env.map((item) => (
-              <div>
-                <dt><code class="env-name">{item.name}</code></dt>
-                <dd><Tx text={item.detail} /></dd>
-              </div>
-            ))
-          }
-        </dl>
-        <div class="table-wrap">
-          <table>
-            <caption><Tx text={copy.data.columnCaption} /></caption>
-            <thead>
-              <tr>
-                <th scope="col"><Tx text={{ zh: "列", en: "Column" }} /></th>
-                <th scope="col"><Tx text={{ zh: "约定", en: "Rule" }} /></th>
-              </tr>
-            </thead>
-            <tbody>
-              {
-                copy.data.columns.map((column) => (
-                  <tr>
-                    <th scope="row"><code>{column.name}</code></th>
-                    <td><Tx text={column.rule} /></td>
-                  </tr>
-                ))
-              }
-            </tbody>
-          </table>
-        </div>
-        <p><Tx text={copy.data.vendor} /></p>
-        <p>
-          <Tx text={copy.data.parquetRun} />
-        </p>
-        <pre><code>{parquetCommand}</code></pre>
-        <p>
-          <Tx text={copy.data.csvRun} />
-        </p>
-        <pre><code>{csvCommand}</code></pre>
-        <p class="note"><Tx text={copy.data.runNote} /></p>
-        <p>
-          <Tx text={copy.data.defaultUrl} />
+        <h3><Tx text={architecture.dataHeading} /></h3>
+        <p><Tx text={architecture.data} /></p>
+        <h3><Tx text={architecture.splitHeading} /></h3>
+        <p><Tx text={architecture.split} /></p>
+        <p class="note">
+          <Tx text={architecture.more} />
           {" "}
-          <a href={links.defaultCsv}><code>historical_data.csv</code></a>
+          <a href={`${base}docs/`}><Tx text={docsLink} /></a>
         </p>
-      </div>
-    </section>
-
-    <section class="block" id="merged" aria-labelledby="merged-heading">
-      <p class="sec-index">{copy.merged.index}</p>
-      <div>
-        <h2 id="merged-heading"><Tx text={copy.merged.heading} /></h2>
-        <p class="intro"><Tx text={copy.merged.intro} /></p>
-        <div class="pr-list">
-          {
-            copy.merged.items.map((item) => (
-              <article class="pr">
-                <p class="pr-n"><a href={item.href}>{item.n}</a></p>
-                <div>
-                  <h3><a href={item.href}>{item.title}</a></h3>
-                  <p class="pr-meta">
-                    <Tx text={item.state} />
-                    {" · "}
-                    <Tx text={item.base} />
-                  </p>
-                  <p><Tx text={item.body} /></p>
-                </div>
-              </article>
-            ))
-          }
-        </div>
-        <p class="callout"><Tx text={copy.merged.note} /></p>
-      </div>
-    </section>
-
-    <section class="block" id="next" aria-labelledby="next-heading">
-      <p class="sec-index">{copy.next.index}</p>
-      <div>
-        <h2 id="next-heading"><Tx text={copy.next.heading} /></h2>
-        <p class="intro"><Tx text={copy.next.intro} /></p>
-        <dl class="facts">
-          {
-            copy.next.items.map((item) => (
-              <div>
-                <dt>
-                  {"href" in item && item.href ? (
-                    <a href={item.href}><Tx text={item.term} /></a>
-                  ) : (
-                    <Tx text={item.term} />
-                  )}
-                </dt>
-                <dd><Tx text={item.detail} /></dd>
-              </div>
-            ))
-          }
-        </dl>
-      </div>
-    </section>
-
-    <section class="block" id="links" aria-labelledby="links-heading">
-      <p class="sec-index">{copy.links.index}</p>
-      <div>
-        <h2 id="links-heading"><Tx text={copy.links.heading} /></h2>
-        <dl class="link-list">
-          {
-            copy.links.items.map((item) => (
-              <div>
-                <dt><a href={item.href}><Tx text={item.label} /></a></dt>
-                <dd><Tx text={item.note} /></dd>
-              </div>
-            ))
-          }
-        </dl>
       </div>
     </section>
   </div>
