@@ -1,6 +1,8 @@
+[English](README.md) | **简体中文**
+
 # MoE-LSTM
 
-英文说明：[README.md](README.md)。本文与英文文档描述同一套行为，事实以英文和代码为准。
+本文与英文文档描述同一套行为，事实以英文和代码为准。
 
 这是一个日频模型，用来判断指数下一根 K 线的收盘相对当根收盘是否上涨。脚本最初按标普 500 编写。它计算技术指标，用 K-Means 和自组织映射挑选特征子集，对每个子集训练一个 LSTM 混合专家，并打印多空回测与买入持有的对比。
 
@@ -33,28 +35,28 @@ export MOE_DATA_PARQUET=/path/to/dataset-root
 export MOE_SYMBOL=AAPL
 # export MOE_SECURITY=your-hash   # 同一 ticker 有多个 security 时才需要
 export MPLBACKEND=Agg
-python moe_lstm.py
+uv run python moe_lstm.py
 ```
 
 `MOE_DATA_PARQUET` 也可以直接指向 `parquet/` 目录。真实行情不放进本仓库。设置了 `MOE_DATA_PARQUET` 时，它优先于 `MOE_DATA_CSV`。
 
 ```bash
-python -m unittest tests.test_hive_daily_bars
+uv run python -m unittest tests.test_hive_daily_bars
 ```
 
-这个检查会建一棵合成的 Hive 目录并比较日线 OHLCV，不需要 TensorFlow。`.github/workflows/parquet-loader.yml` 在 pull request 上，以及向 `main` 的 push 上运行它。下面的 CSV 约定只用于 `MOE_DATA_CSV`。
+这个检查会建一棵合成的 Hive 目录并比较日线 OHLCV，不需要 TensorFlow。`.github/workflows/parquet-loader.yml` 在 pull request 上，以及向 `main` 的 push 上运行它，并用 uv 只安装 pandas 和 pyarrow。下面的 CSV 约定只用于 `MOE_DATA_CSV`。
 
 ## 环境
 
-在 Python 3.12 上核对过。
+在 Python 3.12 上核对过。先安装 [uv](https://docs.astral.sh/uv/) 0.13.7，然后在本目录执行：
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv sync
 ```
 
-`requirements.txt` 锁定 2026-11-05 在 Python 3.12 上能干净安装的版本：
+`uv sync` 会创建 `.venv` 并安装锁定的依赖。`pyproject.toml` 锁定直接依赖。`uv.lock` 锁定完整解析结果。本仓库是脚本，不是可安装的包。`.python-version` 指定 Python 3.12，本机没有该版本时 uv 会安装它。
+
+直接依赖是 2026-11-05 在 Python 3.12 上能干净安装的那一组，再加上 Hive 加载用的 pyarrow 26.0.1：
 
 | 包 | 版本 |
 | --- | --- |
@@ -77,7 +79,7 @@ Keras 单独锁定，是因为 TensorFlow 2.21.0 只要求 `keras>=3.12`。精�
 ```bash
 export MOE_DATA_CSV=/path/to/bars.csv
 export MPLBACKEND=Agg
-python moe_lstm.py
+uv run python moe_lstm.py
 ```
 
 没有命令行参数。设置了 `MOE_DATA_PARQUET` 时，数据来自那个 Hive 根目录。否则数据来自 `MOE_DATA_CSV`。未设置时读取 `DEFAULT_DATA_URL`。该变量可以是本地路径，也可以是 `pandas.read_csv` 能打开的 URL。
@@ -89,21 +91,21 @@ python moe_lstm.py
 ## 测试
 
 ```bash
-python -m unittest discover -s tests -t . -v
+uv run python -m unittest discover -s tests -t . -v
 ```
 
 加载、标签、切分和回测不会导入 TensorFlow。安装了 TensorFlow 时，`tests/test_model.py` 会构建混合专家并执行 `main(epochs=1)`。未安装时这些测试跳过。
 
 ## CI
 
-`.github/workflows/tests.yml` 在 pull request 上，以及向 `main` 的 push 上，运行上面的 unittest。环境是 `ubuntu-latest` 和 Python 3.12，先安装锁定的依赖。
+`.github/workflows/tests.yml` 在 pull request 上，以及向 `main` 的 push 上，运行上面的 unittest。环境是 `ubuntu-latest` 和 Python 3.12，先执行 `uv sync --frozen`。
 
-`.github/workflows/smoke.yml` 在同样的事件上运行。它安装同一套版本，对 `moe_lstm.py` 做字节编译，并用 `tests/fixtures/tiny_bars.csv` 训练一个 epoch：
+`.github/workflows/smoke.yml` 在同样的事件上运行。它安装同一份锁，对 `moe_lstm.py` 做字节编译，并用 `tests/fixtures/tiny_bars.csv` 训练一个 epoch：
 
 ```bash
-python -m pip install -r requirements.txt
-python -m py_compile moe_lstm.py
-MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MOE_EPOCHS=1 MPLBACKEND=Agg python moe_lstm.py
+uv sync --frozen
+uv run python -m py_compile moe_lstm.py
+MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MOE_EPOCHS=1 MPLBACKEND=Agg uv run python moe_lstm.py
 ```
 
 `tests/fixtures/tiny_bars.csv` 是符合上述列约定的 120 行合成序列，用来确认脚本能加载、拟合并打印指标。它不是真实行情。这条 workflow 给 TensorFlow 安装留了 30 分钟。如果 GitHub 托管 runner 装不上 TensorFlow，就在能安装的机器上跑这三条命令。`py_compile` 不会导入 TensorFlow。跑完后仍可能看到 TensorFlow 的 retracing 警告，因为每个特征子集都会单独建一个模型。不会再出现无显示画布警告。

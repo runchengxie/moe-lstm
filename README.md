@@ -1,6 +1,6 @@
-# MoE-LSTM
+**English** | [简体中文](README.zh-CN.md)
 
-中文说明：[README.zh-CN.md](README.zh-CN.md).
+# MoE-LSTM
 
 Daily next-session up/down model for an index level. The script was written for the S&P 500. It builds technical features, picks feature subsets with K-Means and a self-organizing map, trains an LSTM mixture of experts on each subset, and prints a long/short backtest against buy and hold.
 
@@ -33,28 +33,28 @@ export MOE_DATA_PARQUET=/path/to/dataset-root
 export MOE_SYMBOL=AAPL
 # export MOE_SECURITY=your-hash   # only when several securities share the ticker
 export MPLBACKEND=Agg
-python moe_lstm.py
+uv run python moe_lstm.py
 ```
 
 The loader also accepts `MOE_DATA_PARQUET` pointed at the `parquet/` directory itself. Real market files stay outside this repo. When `MOE_DATA_PARQUET` is set it wins over `MOE_DATA_CSV`.
 
 ```bash
-python -m unittest tests.test_hive_daily_bars
+uv run python -m unittest tests.test_hive_daily_bars
 ```
 
-That check builds a synthetic Hive tree and compares the daily OHLCV. It does not need TensorFlow. `.github/workflows/parquet-loader.yml` runs it on pull requests and on pushes to `main`. The CSV contract below applies only to `MOE_DATA_CSV`.
+That check builds a synthetic Hive tree and compares the daily OHLCV. It does not need TensorFlow. `.github/workflows/parquet-loader.yml` runs it on pull requests and on pushes to `main`, using uv to install pandas and pyarrow only. The CSV contract below applies only to `MOE_DATA_CSV`.
 
 ## Setup
 
-Checked on Python 3.12.
+Checked on Python 3.12. Install [uv](https://docs.astral.sh/uv/) 0.13.7, then from this directory:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv sync
 ```
 
-`requirements.txt` pins the set that installed cleanly on Python 3.12 on 2026-11-05:
+`uv sync` creates `.venv` and installs the locked dependencies. `pyproject.toml` pins the direct packages. `uv.lock` pins the full resolve. This repository is a script, not an installable package. `.python-version` requests Python 3.12, and uv installs that interpreter when it is missing.
+
+The direct pins are the set that installed cleanly on Python 3.12 on 2026-11-05, plus pyarrow 26.0.1 for the Hive loader:
 
 | Package | Pin |
 | --- | --- |
@@ -77,7 +77,7 @@ Market data is not in this repo. The default URL is `runchengxie/quant_practice_
 ```bash
 export MOE_DATA_CSV=/path/to/bars.csv
 export MPLBACKEND=Agg
-python moe_lstm.py
+uv run python moe_lstm.py
 ```
 
 There is no argument parser. When `MOE_DATA_PARQUET` is set, that Hive root is the data source. Otherwise `MOE_DATA_CSV` is the data setting. When it is unset, the script reads `DEFAULT_DATA_URL`. `MOE_DATA_CSV` may be a local path or any URL `pandas.read_csv` can open.
@@ -89,21 +89,21 @@ Training fits three models (manual features, the K-Means subset, and the SOM sub
 ## Tests
 
 ```bash
-python -m unittest discover -s tests -t . -v
+uv run python -m unittest discover -s tests -t . -v
 ```
 
 Loading, labels, the split, and the backtest do not import TensorFlow. `tests/test_model.py` builds the mixture and runs `main(epochs=1)` when TensorFlow is installed, and skips otherwise.
 
 ## CI
 
-`.github/workflows/tests.yml` runs the unittest command above on pull requests and on pushes to `main`, on `ubuntu-latest` with Python 3.12, after installing the pinned requirements.
+`.github/workflows/tests.yml` runs the unittest command above on pull requests and on pushes to `main`, on `ubuntu-latest` with Python 3.12, after `uv sync --frozen`.
 
-`.github/workflows/smoke.yml` runs on those same events. It installs the same pins, byte-compiles `moe_lstm.py`, and trains one epoch on `tests/fixtures/tiny_bars.csv`:
+`.github/workflows/smoke.yml` runs on those same events. It installs the same lock, byte-compiles `moe_lstm.py`, and trains one epoch on `tests/fixtures/tiny_bars.csv`:
 
 ```bash
-python -m pip install -r requirements.txt
-python -m py_compile moe_lstm.py
-MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MOE_EPOCHS=1 MPLBACKEND=Agg python moe_lstm.py
+uv sync --frozen
+uv run python -m py_compile moe_lstm.py
+MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MOE_EPOCHS=1 MPLBACKEND=Agg uv run python moe_lstm.py
 ```
 
 `tests/fixtures/tiny_bars.csv` is a synthetic 120-row series in this column contract. It checks that the script can load, fit, and print metrics. It is not market data. The smoke workflow allows 30 minutes for the TensorFlow wheel. If a GitHub-hosted runner cannot install TensorFlow, run the three commands on a machine that can. `py_compile` does not import TensorFlow. A finished run can still print TensorFlow retracing warnings, because each feature set builds its own model. It does not print a non-interactive canvas warning.

@@ -1,0 +1,20 @@
+[project]
+name = "moe-lstm"
+version = "0.1.0"
+description = "Daily next-session up/down model for an index level using an LSTM mixture of experts."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas==3.1.1",
+    "numpy==2.5.4",
+    "matplotlib==3.11.2",
+    "seaborn==0.13.2",
+    "tensorflow==2.21.0",
+    "keras==3.15.1",
+    "scikit-learn==1.9.1",
+    "minisom==2.3.6",
+    "pyarrow==26.0.1",
+]
+
+[tool.uv]
+package = false

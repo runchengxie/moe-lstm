@@ -15,19 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: requirements.txt
+          version: "0.13.7"
+          enable-cache: true
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+        run: uv sync --frozen
 
       - name: Byte-compile
-        run: python -m py_compile moe_lstm.py
+        run: uv run python -m py_compile moe_lstm.py
 
       - name: Smoke train
         env:
@@ -35,4 +32,4 @@ jobs:
           MOE_EPOCHS: "1"
           MPLBACKEND: Agg
           TF_CPP_MIN_LOG_LEVEL: "2"
-        run: python moe_lstm.py
+        run: uv run python moe_lstm.py
