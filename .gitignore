@@ -4,3 +4,6 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+site/node_modules/
+site/dist/
+site/.astro/

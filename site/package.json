@@ -1,0 +1,19 @@
+{
+  "name": "moe-lstm-site",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Bilingual public brief for the moe_lstm study script.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check-dist": "node scripts/check-dist.mjs"
+  },
+  "dependencies": {
+    "astro": "7.4.5"
+  }
+}

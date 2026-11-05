@@ -145,3 +145,26 @@ The default fee is `0.0005` return units per unit of position turnover. The acco
 Total return is final equity minus 1. Max drawdown is the minimum of `equity / running_peak - 1` and is zero or negative. Sharpe ratio is the mean strategy return divided by its sample standard deviation, times `sqrt(252)`. That scaling assumes one bar per trading session. If the median gap between dates is outside 1 to 3 days, the script prints a warning and still reports the same ratio. A constant strategy return has Sharpe `NaN`. If the test labels contain one class, AUC is `NaN` and the other classification scores use `zero_division=0`.
 
 Reported columns are `Model`, `Accuracy`, `Precision`, `Recall`, `F1`, `AUC-ROC`, `Total Return`, `Max Drawdown`, and `Sharpe Ratio` for `Manual`, `KMeans`, and `SOM`.
+
+## Project site
+
+A bilingual brief lives in [`site/`](site/). Chinese is the default, with an English switch. Color follows `prefers-color-scheme`, and the page can force light, dark, or system. [`.github/workflows/pages.yml`](.github/workflows/pages.yml) builds only that Astro app (Node.js 26.13.0 from `site/.nvmrc`) and deploys `site/dist` with `actions/upload-pages-artifact` and `actions/deploy-pages`. It does not install the Python dependencies.
+
+After the workflow has succeeded on `main`, the site is [https://runchengxie.github.io/moe_lstm/](https://runchengxie.github.io/moe_lstm/). On 2026-11-05 that URL returned HTTP 404 because no Pages deploy had run. The Pages API already reported Source as GitHub Actions (`build_type: workflow`).
+
+### Enable GitHub Pages
+
+1. Open **Settings → Pages**.
+2. Under **Build and deployment**, set **Source** to **GitHub Actions** (not “Deploy from a branch”).
+3. Merge the workflow to `main`. Pushes that touch `site/`, the workflow, or this README run `pages`. The deploy job itself runs only on `main`. A pull request builds the site and does not publish it.
+4. If the first run waits on the `github-pages` environment, approve it once. The published URL is https://runchengxie.github.io/moe_lstm/ .
+
+If Source is already GitHub Actions, step 2 needs no click. Full local commands for npm and pnpm, and the `/moe_lstm/` base path, are in [`site/README.md`](site/README.md).
+
+```bash
+cd site
+npm ci
+npm run dev
+```
+
+Open http://127.0.0.1:4321/moe_lstm/ . With pnpm, from `site/`: `pnpm install` then `pnpm dev`. Continuous integration uses npm and `site/package-lock.json`.

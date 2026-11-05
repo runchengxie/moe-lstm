@@ -1,0 +1,94 @@
+---
+import "../styles/global.css";
+import Tx from "../components/Tx.astro";
+import { copy, links, ui } from "../i18n/copy";
+
+interface Props {
+  canonical?: boolean;
+}
+
+const { canonical = false } = Astro.props;
+const base = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html
+  lang="zh"
+  data-theme="system"
+  data-title-zh={copy.meta.title.zh}
+  data-title-en={copy.meta.title.en}
+  data-desc-zh={copy.meta.description.zh}
+  data-desc-en={copy.meta.description.en}
+>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={copy.meta.description.zh} />
+    <meta name="theme-color" content="#f3efe6" />
+    <title>{copy.meta.title.zh}</title>
+    <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
+    {canonical ? <link rel="canonical" href={links.pages} /> : null}
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        try {
+          var lang = localStorage.getItem("moe-lang");
+          if (lang === "en" || lang === "zh") root.lang = lang;
+          var theme = localStorage.getItem("moe-theme");
+          if (theme === "light" || theme === "dark" || theme === "system") {
+            root.setAttribute("data-theme", theme);
+          }
+        } catch (err) {
+          /* localStorage can throw in private mode; the defaults still render. */
+        }
+        var active = root.lang === "en" ? "en" : "zh";
+        var title = root.getAttribute("data-title-" + active);
+        var desc = root.getAttribute("data-desc-" + active);
+        if (title) document.title = title;
+        var description = document.querySelector('meta[name="description"]');
+        if (description && desc) description.setAttribute("content", desc);
+        var choice = root.getAttribute("data-theme") || "system";
+        var dark =
+          choice === "dark" ||
+          (choice !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        var themeMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeMeta) themeMeta.setAttribute("content", dark ? "#121417" : "#f3efe6");
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#content"><Tx text={ui.skip} /></a>
+    <header class="top">
+      <div class="wrap top-inner">
+        <a class="brand" href={base}>moe_lstm</a>
+        <div class="control">
+          <span class="caption" id="lang-label"><Tx text={ui.langLabel} /></span>
+          <div class="seg" role="group" aria-labelledby="lang-label">
+            <button type="button" data-set-lang="zh" aria-pressed="true"><Tx text={ui.langZh} /></button>
+            <button type="button" data-set-lang="en" aria-pressed="false"><Tx text={ui.langEn} /></button>
+          </div>
+        </div>
+        <div class="control">
+          <span class="caption" id="theme-label"><Tx text={ui.themeLabel} /></span>
+          <div class="seg" role="group" aria-labelledby="theme-label">
+            <button type="button" data-set-theme="light" aria-pressed="false"><Tx text={ui.themeLight} /></button>
+            <button type="button" data-set-theme="dark" aria-pressed="false"><Tx text={ui.themeDark} /></button>
+            <button type="button" data-set-theme="system" aria-pressed="true"><Tx text={ui.themeSystem} /></button>
+          </div>
+        </div>
+      </div>
+    </header>
+    <main id="content">
+      <slot />
+    </main>
+    <footer>
+      <div class="wrap footer-inner">
+        <p><Tx text={ui.footer} /></p>
+        <p><a href={links.repo}>runchengxie/moe_lstm</a></p>
+      </div>
+    </footer>
+    <script>
+      import "../scripts/prefs.ts";
+    </script>
+  </body>
+</html>
