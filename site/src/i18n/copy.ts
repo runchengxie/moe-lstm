@@ -30,6 +30,9 @@ export const ui = {
   themeLight: L("浅色", "Light"),
   themeDark: L("深色", "Dark"),
   themeSystem: L("系统", "System"),
+  navLabel: L("站点", "Site"),
+  navBrief: L("简报", "Brief"),
+  navDocs: L("文档", "Docs"),
   footer: L(
     "研究脚本，不提供交易信号。仓库和本站都不放行情。",
     "A research script, with no trading signals. The repository and this site do not host market data.",
@@ -222,12 +225,12 @@ export const copy = {
     parquetRun: L("Hive 分钟线", "Hive minute bars"),
     csvRun: L("CSV 回退", "CSV fallback"),
     runNote: L(
-      "`uv sync` 按 `pyproject.toml` 和 `uv.lock` 安装。smoke 和 unittest 的 CI 使用 `uv sync --frozen`。仓库里没有 `requirements.txt`。更完整的说明在根 README。",
-      "`uv sync` installs from `pyproject.toml` and `uv.lock`. Smoke and unit CI use `uv sync --frozen`. There is no `requirements.txt`. The root README has the longer setup note.",
+      "`uv sync` 按 `pyproject.toml` 和 `uv.lock` 安装。smoke 和 unittest 的 CI 使用 `uv sync --frozen`。仓库里没有 `requirements.txt`。更完整的安装说明在 `docs/setup.zh-CN.md`。",
+      "`uv sync` installs from `pyproject.toml` and `uv.lock`. Smoke and unit CI use `uv sync --frozen`. There is no `requirements.txt`. The longer setup note is in `docs/setup.md`.",
     ),
     vendor: L(
-      "根 README 说明 AlgoSeek 的美股 bar 不是上面的 CSV 列名，要在单独的文件里映射成这五列。Hive 分钟 Parquet 是另一条已在 main 上的路径：加载器按分钟字段聚合成这些日线列。未设置 Parquet 根目录时才走 CSV。",
-      "The root README states that AlgoSeek US equity bars are not the CSV schema above. Map them onto these five columns in a separate file. Hive minute Parquet is a separate path already on main: the loader rolls minute fields up to these daily columns. CSV is used only when the Parquet root is unset.",
+      "`docs/data.zh-CN.md` 说明 AlgoSeek 的美股 bar 不是上面的 CSV 列名，要在单独的文件里映射成这五列。Hive 分钟 Parquet 是另一条已在 main 上的路径：加载器按分钟字段聚合成这些日线列。未设置 Parquet 根目录时才走 CSV。",
+      "`docs/data.md` states that AlgoSeek US equity bars are not the CSV schema above. Map them onto these five columns in a separate file. Hive minute Parquet is a separate path already on main: the loader rolls minute fields up to these daily columns. CSV is used only when the Parquet root is unset.",
     ),
     defaultUrl: L(
       "默认 CSV URL，撰写 README 时返回 HTTP 404：",
@@ -379,7 +382,7 @@ export const copy = {
   },
   missing: {
     title: L("没有这一页", "No such page"),
-    body: L("简报只有首页。", "The brief is a single page."),
+    body: L("这一页不在简报或文档里。", "This page is not in the brief or the docs."),
     home: L("回到简报", "Back to the brief"),
   },
 };

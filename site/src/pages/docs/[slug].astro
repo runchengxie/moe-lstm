@@ -1,0 +1,36 @@
+---
+import Base from "../../layouts/Base.astro";
+import DocsNav from "../../components/DocsNav.astro";
+import { docPages, docsIndexCopy, loadDoc, loadDocs, type DocSlug } from "../../lib/docs";
+
+export function getStaticPaths() {
+  return docPages.map((page) => ({ params: { slug: page.slug } }));
+}
+
+const slug = Astro.params.slug;
+if (!slug) throw new Error("Missing docs slug.");
+const base = import.meta.env.BASE_URL;
+const pages = loadDocs(base);
+const doc = loadDoc(slug, base);
+const title = {
+  zh: `${doc.title.zh} · moe_lstm`,
+  en: `${doc.title.en} · moe_lstm`,
+};
+---
+
+<Base title={title} description={doc.blurb}>
+  <div class="docs-shell">
+    <DocsNav current={slug as DocSlug} pages={pages} />
+    <article class="docs-prose">
+      <div data-locale="zh" set:html={doc.html.zh} />
+      <div data-locale="en" set:html={doc.html.en} />
+      <p class="note">
+        <span data-locale="zh">{docsIndexCopy.sourceLabel.zh}</span>
+        <span data-locale="en">{docsIndexCopy.sourceLabel.en}</span>
+        {": "}
+        <a data-locale="zh" href={doc.source.zh}><code>docs/{doc.source.zh.split("/docs/")[1]}</code></a>
+        <a data-locale="en" href={doc.source.en}><code>docs/{doc.source.en.split("/docs/")[1]}</code></a>
+      </p>
+    </article>
+  </div>
+</Base>

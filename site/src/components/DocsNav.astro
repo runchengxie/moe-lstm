@@ -1,0 +1,30 @@
+---
+import { docsIndexCopy, type DocSlug, type RenderedDoc } from "../lib/docs";
+
+interface Props {
+  current: DocSlug | "index";
+  pages: Pick<RenderedDoc, "slug" | "title">[];
+}
+
+const { current, pages } = Astro.props;
+const base = import.meta.env.BASE_URL;
+---
+
+<nav class="docs-nav">
+  <a href={`${base}docs/`} aria-current={current === "index" ? "page" : undefined}>
+    <span data-locale="zh">{docsIndexCopy.title.zh}</span>
+    <span data-locale="en">{docsIndexCopy.title.en}</span>
+  </a>
+  <ol>
+    {
+      pages.map((page) => (
+        <li>
+          <a href={`${base}docs/${page.slug}/`} aria-current={current === page.slug ? "page" : undefined}>
+            <span data-locale="zh">{page.title.zh}</span>
+            <span data-locale="en">{page.title.en}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</nav>
