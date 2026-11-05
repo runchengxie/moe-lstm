@@ -1,0 +1,101 @@
+---
+import Base from "../layouts/Base.astro";
+import Tx from "../components/Tx.astro";
+import { changelogCopy, copy, csvCommand, links, parquetCommand } from "../i18n/copy";
+
+const runtime = copy.what.facts.find((fact) => fact.term.en === "Runtime");
+---
+
+<Base title={changelogCopy.title} description={changelogCopy.lede}>
+  <div class="wrap">
+    <header class="hero">
+      <p class="kicker"><Tx text={changelogCopy.title} /></p>
+      <h1><Tx text={changelogCopy.title} /></h1>
+      <p class="lede"><Tx text={changelogCopy.lede} /></p>
+      <p class="asof"><Tx text={copy.hero.asOf} /></p>
+    </header>
+
+    <section class="block" id="merged" aria-labelledby="merged-heading">
+      <p class="sec-index">{copy.merged.index}</p>
+      <div>
+        <h2 id="merged-heading"><Tx text={copy.merged.heading} /></h2>
+        <p class="intro"><Tx text={copy.merged.intro} /></p>
+        <div class="pr-list">
+          {
+            copy.merged.items.map((item) => (
+              <article class="pr">
+                <p class="pr-n"><a href={item.href}>{item.n}</a></p>
+                <div>
+                  <h3><a href={item.href}>{item.title}</a></h3>
+                  <p class="pr-meta">
+                    <Tx text={item.state} />
+                    {" · "}
+                    <Tx text={item.base} />
+                  </p>
+                  <p><Tx text={item.body} /></p>
+                </div>
+              </article>
+            ))
+          }
+        </div>
+        <p class="callout"><Tx text={copy.merged.note} /></p>
+      </div>
+    </section>
+
+    <section class="block" id="next" aria-labelledby="next-heading">
+      <p class="sec-index">{copy.next.index}</p>
+      <div>
+        <h2 id="next-heading"><Tx text={copy.next.heading} /></h2>
+        <p class="intro"><Tx text={copy.next.intro} /></p>
+        <dl class="facts">
+          {
+            copy.next.items.map((item) => (
+              <div>
+                <dt>
+                  {"href" in item && item.href ? (
+                    <a href={item.href}><Tx text={item.term} /></a>
+                  ) : (
+                    <Tx text={item.term} />
+                  )}
+                </dt>
+                <dd><Tx text={item.detail} /></dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+
+    {
+      runtime && (
+        <section class="block" id="runtime" aria-labelledby="runtime-heading">
+          <p class="sec-index">06</p>
+          <div>
+            <h2 id="runtime-heading"><Tx text={runtime.term} /></h2>
+            <p><Tx text={runtime.detail} /></p>
+            <p class="note"><Tx text={copy.data.runNote} /></p>
+            <pre><code>{parquetCommand}</code></pre>
+            <pre><code>{csvCommand}</code></pre>
+          </div>
+        </section>
+      )
+    }
+
+    <section class="block" id="links" aria-labelledby="links-heading">
+      <p class="sec-index">{copy.links.index}</p>
+      <div>
+        <h2 id="links-heading"><Tx text={copy.links.heading} /></h2>
+        <dl class="link-list">
+          {
+            copy.links.items.map((item) => (
+              <div>
+                <dt><a href={item.href}><Tx text={item.label} /></a></dt>
+                <dd><Tx text={item.note} /></dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+  </div>
+</Base>

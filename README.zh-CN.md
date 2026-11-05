@@ -1,6 +1,6 @@
 [English](README.md) | **简体中文**
 
-**项目站点：** [https://runchengxie.github.io/moe_lstm/](https://runchengxie.github.io/moe_lstm/) — 简报和文档。
+**项目站点：** [https://runchengxie.github.io/moe_lstm/](https://runchengxie.github.io/moe_lstm/) — 首页和文档。
 
 # MoE-LSTM
 
@@ -41,4 +41,4 @@ MOE_DATA_PARQUET=/path/to/dataset-root MOE_SYMBOL=AAPL MPLBACKEND=Agg uv run pyt
 - [环境](docs/setup.zh-CN.md) — uv、为什么钉住这些包、Python 3.12
 - [CI 和项目站点](docs/ci.zh-CN.md) — GitHub 工作流、冒烟用的样本、GitHub Pages
 
-这些说明也在项目站点上：[https://runchengxie.github.io/moe_lstm/](https://runchengxie.github.io/moe_lstm/)。[`site/`](site/) 里的 Astro 应用同时提供简报和这些文档。2026-11-05 这个地址返回 HTTP 404，因为还没有 Pages 部署。预览和发布步骤写在 [`site/README.md`](site/README.md)。
+这些说明也在项目站点上：[https://runchengxie.github.io/moe_lstm/](https://runchengxie.github.io/moe_lstm/)。[`site/`](site/) 里的 Astro 应用同时提供首页和这些文档。2026-11-05 这个地址返回 HTTP 404，因为还没有 Pages 部署。预览和发布步骤写在 [`site/README.md`](site/README.md)。

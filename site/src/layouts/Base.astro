@@ -12,7 +12,7 @@ interface Props {
 const { canonical = false, title = copy.meta.title, description = copy.meta.description } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const path = Astro.url.pathname.endsWith("/") ? Astro.url.pathname : `${Astro.url.pathname}/`;
-const onBrief = path === base;
+const onHome = path === base;
 const onDocs = path.startsWith(`${base}docs/`);
 ---
 
@@ -67,7 +67,7 @@ const onDocs = path.startsWith(`${base}docs/`);
       <div class="wrap top-inner">
         <a class="brand" href={base}>moe_lstm</a>
         <nav class="site-nav">
-          <a href={base} aria-current={onBrief ? "page" : undefined}><Tx text={ui.navBrief} /></a>
+          <a href={base} aria-current={onHome ? "page" : undefined}><Tx text={ui.navHome} /></a>
           <a href={`${base}docs/`} aria-current={onDocs ? "page" : undefined}><Tx text={ui.navDocs} /></a>
         </nav>
         <div class="control">
@@ -93,7 +93,11 @@ const onDocs = path.startsWith(`${base}docs/`);
     <footer>
       <div class="wrap footer-inner">
         <p><Tx text={ui.footer} /></p>
-        <p><a href={links.repo}>runchengxie/moe_lstm</a></p>
+        <p>
+          <a href={links.repo}>runchengxie/moe_lstm</a>
+          {" · "}
+          <a href={`${base}changelog/`}><Tx text={ui.navChangelog} /></a>
+        </p>
       </div>
     </footer>
     <script>
