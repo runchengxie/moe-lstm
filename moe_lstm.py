@@ -1,219 +1,65 @@
-'''
-本脚本展示如何构建并评估一个混合专家（Mixture-of-Experts, MoE）结构的 LSTM 模型，用于预测标普 500 指数的短期上涨趋势。
-主要流程包括：
-1. 数据获取与预处理：读取原始数据、对价格和技术指标进行计算（如移动平均线、RSI、MACD、布林带等）。
-2. 特征工程：对多种特征进行聚类（K-Means、SOM）或直接使用手工特征集，选出合适特征输入模型。
-3. 模型构建与训练：使用多个 LSTM 专家（Experts）和门控网络（Gating Network）组合来得到最终的预测结果（上涨或下跌）。
-4. 回测与评估：根据预测结果，使用简单的多空策略进行回测，计算策略收益率、最大回撤与夏普率等指标，并与基准（Buy & Hold）进行对比。
+"""Mixture-of-experts LSTM for the next session's index direction.
 
-通过多个专家网络来分别提取不同信息维度，并用门控网络融合它们，可在一定程度上提升对市场走势的捕捉能力。
-'''
+The script reads a daily OHLC CSV, builds technical features, selects subsets
+with K-Means and a self-organizing map, and trains one LSTM mixture on each
+subset. A prediction of 1 is long and 0 is short. The backtest earns the next
+close-to-close return. Feature selection seeds are fixed. LSTM training is not
+bitwise reproducible.
 
-# ## 明确问题陈述（Problem Statement）
-# 
-# - 所选择的标的: Standard & Poor 500
-# - 预测的时间频率：日频
-# - 数据区间和长度：Jan 13, 2020 - Jan 10, 2025
-# - 具体的预测目标：下一日涨跌（0代表下跌或者不涨，1代表上涨）
-
-
-# 载入必要的库
+中文说明与上面相同。脚本读取日频 OHLC CSV，计算技术指标，用 K-Means 和自组织
+映射挑选特征子集，并分别训练 LSTM 混合专家。预测 1 做多，0 做空，回测赚取下一
+根 K 线的收盘到收盘收益。特征选择的随机种子是固定的，LSTM 训练结果不能逐位复现。
+类别计数只打印，不重采样。三个专家读同一段输入，差别来自初始化和门控权重。
+"""
 
 import os
-
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import seaborn as sns
-
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
-from tensorflow.keras.callbacks import EarlyStopping
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.cluster import KMeans
-from minisom import MiniSom
 from collections import defaultdict
+from typing import NamedTuple
+
+import numpy as np
+import pandas as pd
+from minisom import MiniSom
+from sklearn.cluster import KMeans
 from sklearn.metrics import (
     accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
     precision_score,
     recall_score,
-    f1_score,
     roc_auc_score,
-    confusion_matrix,
-    classification_report
 )
+from sklearn.preprocessing import MinMaxScaler
 
-from tensorflow.keras.layers import Input, LSTM, Dense, Lambda, Flatten
-from tensorflow.keras.models import Model
-import tensorflow.keras.backend as K
-
-
-# 全局参数
+# Study defaults. requirements.txt does not pin a solver, so K-Means sets
+# n_init explicitly: sklearn 1.4 changed the default from 10 to "auto".
 LOOKBACK = 5
 THRESHOLD = 0.002
-N_CLUSTERS = 5  # K-Means聚类数
-# 研究默认 50 轮。MOE_EPOCHS 只改训练长度（CI 短跑用 1），不改网络、损失或早停。
-EPOCHS = int(os.environ.get("MOE_EPOCHS", "50"))
+N_CLUSTERS = 5
+TRAIN_FRACTION = 0.8
+VAL_FRACTION = 0.2
+BACKTEST_FEE = 0.0005
+EPOCHS = 50
+BATCH_SIZE = 16
+PATIENCE = 5
+ANNUALIZATION_DAYS = 252
+PREDICTION_THRESHOLD = 0.5
+KMEANS_RANDOM_STATE = 42
+KMEANS_N_INIT = 10
+SOM_ROWS = 3
+SOM_COLS = 3
+SOM_SIGMA = 0.5
+SOM_LEARNING_RATE = 0.5
+SOM_ITERATIONS = 100
+SOM_SEED = 42
 
-# 读取数据。默认 URL 所在仓库已不存在；本地 CSV 用环境变量 MOE_DATA_CSV 传入。
-DEFAULT_DATA_URL = "https://raw.githubusercontent.com/runchengxie/quant_practice_3/refs/heads/main/historical_data.csv"
-data_path = os.environ.get("MOE_DATA_CSV", DEFAULT_DATA_URL)
-try:
-    df = pd.read_csv(data_path)
-except Exception as exc:
-    raise SystemExit(
-        f"Could not read price data from {data_path!r} ({exc}). "
-        "Set MOE_DATA_CSV to a local CSV with columns "
-        "Date (%m/%d/%Y), Close/Last, Open, High, and Low. "
-        "Price columns must be numeric."
-    ) from exc
-df.head()
-
-# ## 初步数据查看与基础统计
-# 
-# 在开始可视化或相关性分析之前，需要先对数据做基本了解，包括：数据结构、缺失值、数值范围、数据时间跨度等。
-# 
-# 1. 查看数据概况：
-# 
-#   - df.head()：查看前几行，初步了解表格列名及示例数据。
-#   - df.tail()：查看最后几行，确认数据尾部是否有缺失或异常。
-#   - df.info()：检测每列的数据类型、非空计数，将帮助你确认是否有大量空值(NaN)或数据类型不符合预期。
-#   - df.describe()：查看数值列的计数、均值、标准差、最小值、最大值、分位数等；有助于快速识别是否存在极端数值。
-# 
-# 2. 缺失值检查：
-# 
-#   - df.isnull().sum()：列出各列缺失值数量，若有缺失值，需要考虑补全或剔除。
-#   - 对于金融时间序列数据，若缺失值过多，可删除相应日期或采用插值(如前值填补 forward fill)。
-
-print("===== 数据前几行 =====")
-print(df.head())
-
-print("\n===== 数据信息 =====")
-print(df.info())
-
-print("\n===== 描述统计 =====")
-print(df.describe())
-
-print("\n===== 缺失值统计 =====")
-print(df.isnull().sum())
-
-# ## 时间序列可视化（收盘价走势）
-# 
-# 为了直观地观察资产价格变化，可以先画出收盘价 (Close) 随时间演变的折线图。这样能够看出整体趋势、极端点，以及数据是否存在跳跃性变化。
-# 
-# - 绘制收盘价随时间曲线：常用 Matplotlib 或 Seaborn。将 Date 设为 x 轴，Close 设为 y 轴。
-# - 如果你对开高低收 (OHLC) 都感兴趣，还可以分别画出多条曲线对比。
-# - 观察走势期间是否有断点（无交易日或数据缺失），或者有异常价格对走势产生突出影响。
-
-df["Date"] = pd.to_datetime(df["Date"], format="%m/%d/%Y")
-df.sort_values(by="Date", inplace=True)
-
-plt.figure(figsize=(12,6))
-plt.plot(df["Date"], df["Close/Last"], label="Close Price")
-
-# 使用 matplotlib.dates 的Locator 和 Formatter
-ax = plt.gca()
-ax.xaxis.set_major_locator(mdates.MonthLocator(interval=6))  # 每6个月显示一个刻度
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))  # 刻度格式为 年-月
-
-plt.title("Close Price over Time")
-plt.xlabel("Date")
-plt.ylabel("Price")
-plt.legend()
-plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)  # 让标签倾斜，避免重叠
-plt.show()
-
-# ## 生成标签：下一日涨跌 (Up/Down)
-# 
-# - 标签定义：为了避免微小波动的噪声，我们设定当天到下一天的涨幅超过 0.2% 即视为上涨 (Target=1)。
-# - 新增特征：使用了常用技术指标（MA, RSI, MACD 等），帮助模型捕捉趋势、波动和超买/超卖信息。
-# - 合理性：
-#   - 微小涨幅可能无法覆盖手续费和滑点，故设置阈值有助于减少噪声；
-#   - 引入多个技术指标提供更丰富的上下文；
-#   - 平衡数据有助于模型学到更全面的上涨/下跌模式。
-
-threshold = THRESHOLD
-
-# 1. 计算简单移动平均线 (MA)
-df["MA5"] = df["Close/Last"].rolling(window=5).mean()
-df["MA10"] = df["Close/Last"].rolling(window=10).mean()
-
-# 2. 计算指数移动平均线 (EMA)
-df["EMA5"] = df["Close/Last"].ewm(span=5, adjust=False).mean()
-df["EMA10"] = df["Close/Last"].ewm(span=10, adjust=False).mean()
-
-# 3. 计算相对强弱指数 (RSI)
-# RSI 常用14天计算，这里简单示例:
-window_length = 14
-delta = df["Close/Last"].diff()
-gain = (delta.clip(lower=0)).abs()
-loss = (-delta.clip(upper=0)).abs()
-
-avg_gain = gain.rolling(window=window_length).mean()
-avg_loss = loss.rolling(window=window_length).mean()
-
-rs = avg_gain / avg_loss
-df["RSI"] = 100 - (100 / (1 + rs))
-
-# 4. 布林带 (Bollinger Bands)
-# 计算MA20为中轨，2倍标准差为上轨和下轨
-df["MA20"] = df["Close/Last"].rolling(window=20).mean()
-df["STD20"] = df["Close/Last"].rolling(window=20).std()
-df["BB_upper"] = df["MA20"] + 2 * df["STD20"]
-df["BB_lower"] = df["MA20"] - 2 * df["STD20"]
-
-# 5. MACD (12, 26, 9)
-ema12 = df["Close/Last"].ewm(span=12, adjust=False).mean()
-ema26 = df["Close/Last"].ewm(span=26, adjust=False).mean()
-df["MACD"] = ema12 - ema26
-df["Signal_line"] = df["MACD"].ewm(span=9, adjust=False).mean()
-
-# 6. 其他可加入的特征，如日内波动、收益率等
-df["Daily_Return"] = df["Close/Last"].pct_change()
-df["Volatility"] = df["Daily_Return"].rolling(window=10).std()
-
-# 注意：上面计算完指标后通常需要丢弃最前面的 NaN 行
-df.dropna(inplace=True)
-
-# 计算涨幅：以当日Close对比前一日Close
-df["Pct_Change"] = df["Close/Last"].pct_change()
-
-# 用下一日的Pct_Change做数据对齐，所以需要shift(-1)
-df["Tomorrow_Change"] = df["Pct_Change"].shift(-1)
-
-# 在生成标签时，如果小于等于0.2% 就标记为 0，否则标记为 1
-def label_function(x):
-    if x > threshold:
-        return 1
-    else:
-        return 0
-
-df["Target"] = df["Tomorrow_Change"].apply(label_function)
-
-# 去掉无法计算下一日涨幅的最后一行
-df.dropna(subset=["Tomorrow_Change"], inplace=True)
-
-# 现在 df 中就有一个新的 Target，体现了「微小涨幅」不计入“上涨”。
-print(df[["Date", "Close/Last", "Pct_Change", "Tomorrow_Change", "Target"]].head(10))
-
-# ## 查看类别数量及比例
-# 
-# - 使用 value_counts() 查看标签列各个值出现的频次，然后进一步计算占比。
-# - 若出现数据不平衡，将应用 SMOTE 过采样平衡数据，并在训练过程中观察 balanced accuracy
-
-balance_counts = df['Target'].value_counts()
-total_samples = len(df)
-
-print("标签分布：")
-print(balance_counts)
-print("\n占比：")
-print(balance_counts / total_samples)
-
-# ## 准备特征：构造LSTM输入
-# - 选定多列特征
-
-manual_feature_cols = [
+DEFAULT_DATA_URL = (
+    "https://raw.githubusercontent.com/runchengxie/quant_practice_3/"
+    "refs/heads/main/historical_data.csv"
+)
+REQUIRED_COLUMNS = ("Date", "Close/Last", "Open", "High", "Low")
+PRICE_COLUMNS = ("Close/Last", "Open", "High", "Low")
+MANUAL_FEATURE_COLUMNS = (
     "Close/Last",
     "MA5",
     "MA10",
@@ -228,411 +74,674 @@ manual_feature_cols = [
     "Volatility",
     "Open",
     "High",
-    "Low"
-]
+    "Low",
+)
+WARMUP_COLUMNS = (
+    "MA5",
+    "MA10",
+    "EMA5",
+    "EMA10",
+    "RSI",
+    "MA20",
+    "STD20",
+    "BB_upper",
+    "BB_lower",
+    "MACD",
+    "Signal_line",
+    "Daily_Return",
+    "Volatility",
+)
+METRIC_COLUMNS = (
+    "Model",
+    "Accuracy",
+    "Precision",
+    "Recall",
+    "F1",
+    "AUC-ROC",
+    "Total Return",
+    "Max Drawdown",
+    "Sharpe Ratio",
+)
 
-feature_data = df[manual_feature_cols].values  # shape: (num_samples, num_features)
 
-# ## 多特征可视化与多重共线性分析
-# 
-# 当你已经构造了 MA、EMA、RSI、MACD 等衍生特征后，建议做以下几点：
-# 
-# 1. 查看分布：
-# 
-#   - 可以用直方图(histogram)或核密度图(kdeplot)查看各特征的分布形态：是否偏态分布、是否存在重尾等。
-# 
-# 2. 特征-特征散点图：
-# 
-#   - 如果你想直观了解任意两个特征之间的关系，如 (RSI, Daily_Return)、(MACD, Volatility) 等，可用散点图比较。
-#   - 将有助于发现“非线性”关系或聚集性。
-# 
-# 3. 相关矩阵(heatmap)：
-# 
-#   - 通过 df.corr() 计算各特征之间的相关系数。若有一些特征高度相关(例如相关系数>0.9)，可能要么删掉其中一个，要么通过降维(如聚类、SOM)来做合并。
+class WindowSplit(NamedTuple):
+    n_fit: int
+    n_val: int
+    n_test: int
+    n_scale_rows: int
 
-corr_matrix = df[manual_feature_cols].corr()
 
-plt.figure(figsize=(10,8))
-sns.heatmap(corr_matrix, annot=True, cmap="coolwarm")
-plt.title("Correlation Matrix of Selected Features")
-plt.show()
+def resolve_data_path() -> str:
+    return os.environ.get("MOE_DATA_CSV", DEFAULT_DATA_URL)
 
-# ## 缩放特征
-# 
-# - 这里需要对多列一起做缩放，保证不同量纲的特征可以在同一尺度上被LSTM处理
 
-scaler = MinMaxScaler(feature_range=(0, 1))
-feature_data_scaled = scaler.fit_transform(feature_data)
+def resolve_epochs(epochs: int | None = None) -> int:
+    """Epoch count for one training run.
 
-# 生成标签（Target），如果你之前已经有 df["Target"] 了，可以这样：
-labels = df["Target"].values
+    An explicit argument wins. Otherwise ``MOE_EPOCHS`` overrides the study
+    default of 50. The variable is read when training starts, not at import.
+    """
+    if epochs is not None:
+        if epochs < 1:
+            raise ValueError(f"epochs must be a positive integer. Got {epochs}.")
+        return epochs
+    raw = os.environ.get("MOE_EPOCHS")
+    if raw is None or raw.strip() == "":
+        return EPOCHS
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise SystemExit(f"MOE_EPOCHS must be a positive integer. Got {raw!r}.") from exc
+    if value < 1:
+        raise SystemExit(f"MOE_EPOCHS must be a positive integer. Got {raw!r}.")
+    return value
 
-# ## K均值聚类进行特征选择
-# 
-# ### 对特征进行聚类
-# 
-# 将每个特征视为高维空间中的点，通过K均值分组：
 
-# 转置特征矩阵，形状为 (n_features, n_samples)
-X_features = feature_data_scaled.T
+def load_price_csv(data_path: str) -> pd.DataFrame:
+    """Read the CSV contract and reject values the indicators cannot use.
 
-# 使用K均值聚类（假设分为5个簇）
-n_clusters = N_CLUSTERS
-kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-kmeans.fit(X_features)
-cluster_labels = kmeans.labels_
+    Extra columns are kept for the preview print. They are not features.
+    """
+    try:
+        frame = pd.read_csv(data_path)
+    except Exception as exc:
+        raise SystemExit(
+            f"Could not read price data from {data_path!r} ({exc}). "
+            "Set MOE_DATA_CSV to a local CSV with columns "
+            "Date (%m/%d/%Y), Close/Last, Open, High, and Low. "
+            "Price columns must be numeric."
+        ) from exc
 
-# ### 选择代表特征
-# 
-# 从每个簇中选择与簇中心最接近的特征：
+    missing = [name for name in REQUIRED_COLUMNS if name not in frame.columns]
+    if missing:
+        raise SystemExit(
+            f"Price data from {data_path!r} is missing columns {missing}. "
+            "Required columns: Date (%m/%d/%Y), Close/Last, Open, High, Low."
+        )
+    if frame.empty:
+        raise SystemExit(f"Price data from {data_path!r} has no rows.")
 
-kmeans_feature_cols = []
-for i in range(n_clusters):
-    indices = np.where(cluster_labels == i)[0]
-    distances = np.linalg.norm(X_features[indices] - kmeans.cluster_centers_[i], axis=1)
-    closest_idx = indices[np.argmin(distances)]
-    kmeans_feature_cols.append(manual_feature_cols[closest_idx])
+    parsed = frame.copy()
+    try:
+        parsed["Date"] = pd.to_datetime(parsed["Date"], format="%m/%d/%Y")
+    except (ValueError, TypeError) as exc:
+        raise SystemExit(
+            f"Could not parse Date in {data_path!r} with format %m/%d/%Y ({exc}). "
+            "An accepted value is 01/13/2020. ISO dates are not accepted."
+        ) from exc
 
-print("K-Means Selected Features:", kmeans_feature_cols)
+    duplicate_count = int(parsed["Date"].duplicated().sum())
+    if duplicate_count:
+        raise SystemExit(
+            f"Date has {duplicate_count} duplicate values in {data_path!r}. "
+            "Each session needs one row."
+        )
 
-# ## 自组织映射（SOM）进行特征选择
-# 
-# ### 训练SOM模型
-# 
-# 使用MiniSom库将特征映射到二维网格：
+    for column in PRICE_COLUMNS:
+        converted = pd.to_numeric(parsed[column], errors="coerce")
+        values = converted.to_numpy(dtype=float)
+        if converted.isna().any() or not np.isfinite(values).all():
+            raise SystemExit(
+                f"Column {column} in {data_path!r} must contain finite numbers. "
+                "A currency symbol or thousands separator is not accepted."
+            )
+        parsed[column] = converted
 
-# 定义SOM网格大小（例如3x3）
-som = MiniSom(3, 3, X_features.shape[1], sigma=0.5, learning_rate=0.5, random_seed=42)
-som.train_random(X_features, 100)  # 训练100次迭代
+    if (parsed["Close/Last"] <= 0).any():
+        raise SystemExit(
+            f"Close/Last in {data_path!r} must be positive so close-to-close "
+            "returns are defined."
+        )
 
-# 获取每个特征的BMU（Best Matching Unit）
-bmu_indices = [som.winner(f) for f in X_features]
+    return parsed.sort_values("Date").reset_index(drop=True)
 
-# ### 根据BMU分组并选择特征
 
-# 1. 准备特征数据（每个特征为一个样本，维度为时间序列长度）
-X_features = feature_data_scaled.T  # 形状: (n_features, n_samples)
+def relative_strength_index(close: pd.Series, window: int = 14) -> pd.Series:
+    """Simple-average RSI. A flat window is 50, not NaN, so it is not deleted."""
+    delta = close.diff()
+    gain = delta.clip(lower=0.0)
+    loss = -delta.clip(upper=0.0)
+    avg_gain = gain.rolling(window).mean()
+    avg_loss = loss.rolling(window).mean()
+    rsi = pd.Series(np.nan, index=close.index, dtype=float)
+    both_zero = (avg_gain == 0) & (avg_loss == 0)
+    no_loss = (avg_loss == 0) & (avg_gain > 0)
+    no_gain = (avg_gain == 0) & (avg_loss > 0)
+    normal = avg_loss > 0
+    rsi.loc[normal] = 100 - (100 / (1 + (avg_gain[normal] / avg_loss[normal])))
+    rsi.loc[no_loss] = 100.0
+    rsi.loc[no_gain] = 0.0
+    rsi.loc[both_zero] = 50.0
+    return rsi
 
-# 2. 训练SOM
-som = MiniSom(3, 3, X_features.shape[1], sigma=0.5, learning_rate=0.5, random_seed=42)
-som.train_random(X_features, 100)
 
-# 3. 获取每个特征的BMU坐标
-bmu_indices = [som.winner(f) for f in X_features]
+def label_directions(forward_returns: pd.Series, threshold: float = THRESHOLD) -> pd.Series:
+    values = forward_returns.to_numpy(dtype=float)
+    if not np.isfinite(values).all():
+        raise ValueError("Forward returns must be finite before labeling.")
+    return pd.Series((values > threshold).astype(int), index=forward_returns.index)
 
-# 4. 按BMU分组
-cluster_map = defaultdict(list)
-for idx, bmu in enumerate(bmu_indices):
-    cluster_map[bmu].append(idx)
 
-# 5. 选择每个BMU组的代表特征
-som_feature_cols = []
-for bmu, cluster in cluster_map.items():
-    # 获取BMU的权重向量（形状为 (n_samples,)）
-    bmu_weights = som.get_weights()[bmu[0], bmu[1], :]
+def build_feature_frame(frame: pd.DataFrame, threshold: float = THRESHOLD) -> pd.DataFrame:
+    """Add indicators and the next-session label.
 
-    # 计算距离
-    distances = [
-        np.linalg.norm(X_features[idx] - bmu_weights)
-        for idx in cluster
-    ]
+    Rows are dropped only for indicator warmup and for the final session, whose
+    next close is unknown. Empty extra columns do not remove sessions.
+    """
+    missing = [name for name in REQUIRED_COLUMNS if name not in frame.columns]
+    if missing:
+        raise ValueError(f"Feature frame is missing columns {missing}.")
 
-    # 选择最近的特征
-    closest_idx = cluster[np.argmin(distances)]
-    som_feature_cols.append(manual_feature_cols[closest_idx])
+    features = frame.sort_values("Date").reset_index(drop=True).copy()
+    close = features["Close/Last"]
+    features["MA5"] = close.rolling(window=5).mean()
+    features["MA10"] = close.rolling(window=10).mean()
+    features["EMA5"] = close.ewm(span=5, adjust=False).mean()
+    features["EMA10"] = close.ewm(span=10, adjust=False).mean()
+    features["RSI"] = relative_strength_index(close)
+    features["MA20"] = close.rolling(window=20).mean()
+    features["STD20"] = close.rolling(window=20).std()
+    features["BB_upper"] = features["MA20"] + 2 * features["STD20"]
+    features["BB_lower"] = features["MA20"] - 2 * features["STD20"]
+    ema12 = close.ewm(span=12, adjust=False).mean()
+    ema26 = close.ewm(span=26, adjust=False).mean()
+    features["MACD"] = ema12 - ema26
+    features["Signal_line"] = features["MACD"].ewm(span=9, adjust=False).mean()
+    features["Daily_Return"] = close.pct_change()
+    features["Volatility"] = features["Daily_Return"].rolling(window=10).std()
 
-print("SOM Selected Features:", som_feature_cols)
+    features = features.dropna(subset=list(WARMUP_COLUMNS)).reset_index(drop=True)
+    # Daily_Return on row t+1 is the close-to-close move the label at t names.
+    features["Tomorrow_Change"] = features["Daily_Return"].shift(-1)
+    features = features.dropna(subset=["Tomorrow_Change"]).reset_index(drop=True)
+    if features.empty:
+        raise ValueError(
+            "No rows left after dropping indicator warmup and the final session. "
+            "A daily file needs at least 28 sessions."
+        )
+    features["Target"] = label_directions(features["Tomorrow_Change"], threshold)
+    return features
 
-# ## 封装模型训练与预测函数
-# 
-# 将模型训练和预测过程封装为函数，便于复用
 
-def train_and_predict_moe(feature_list, model_name, lookback):
-    """训练模型并返回预测结果及分类指标"""
-    # 提取特征数据
-    feature_data = df[feature_list].values
+def window_split(
+    n_rows: int,
+    lookback: int = LOOKBACK,
+    train_fraction: float = TRAIN_FRACTION,
+    val_fraction: float = VAL_FRACTION,
+) -> WindowSplit:
+    """Chronological fit, validation, and test window counts.
 
-    # 独立标准化（每个特征集单独处理）
-    scaler = MinMaxScaler()
-    feature_data_scaled = scaler.fit_transform(feature_data)
+    Scaler rows are the feature rows of the fit windows. Validation is the tail
+    of the training block. The test block is the last ``1 - train_fraction`` of
+    the windows and is not included in ``n_scale_rows``.
+    """
+    if lookback < 1:
+        raise ValueError("lookback must be positive.")
+    n_windows = n_rows - lookback
+    if n_windows < 1:
+        raise ValueError(
+            f"Need more than {lookback} rows to build one window. Got {n_rows}."
+        )
+    n_train = int(n_windows * train_fraction)
+    n_test = n_windows - n_train
+    if n_train < 2 or n_test < 1:
+        raise ValueError(
+            "Need at least two training windows and one test window. "
+            f"Got rows={n_rows}, lookback={lookback}, train={n_train}, test={n_test}."
+        )
+    n_val = max(int(n_train * val_fraction), 1)
+    n_fit = n_train - n_val
+    if n_fit < 1:
+        raise ValueError(
+            "The validation holdout left no fit windows. "
+            f"Got rows={n_rows}, lookback={lookback}, fit={n_fit}, val={n_val}."
+        )
+    # Last fit window starts at n_fit - 1 and covers `lookback` rows.
+    n_scale_rows = n_fit + lookback - 1
+    return WindowSplit(n_fit, n_val, n_test, n_scale_rows)
 
-    # 构造时序窗口
-    X, y = [], []
-    for i in range(len(feature_data_scaled) - lookback):
-        X.append(feature_data_scaled[i : i + lookback])
-        y.append(labels[i + lookback])
-    X = np.array(X)
-    y = np.array(y)
 
-    # 划分训练集和测试集
-    train_size = int(len(X) * 0.8)
-    X_train, X_test = X[:train_size], X[train_size:]
-    y_train, y_test = y[:train_size], y[train_size:]
+def scale_features(values: np.ndarray, n_scale_rows: int) -> np.ndarray:
+    if n_scale_rows < 1 or n_scale_rows > len(values):
+        raise ValueError(
+            f"Scaler row count must be inside 1..{len(values)}. Got {n_scale_rows}."
+        )
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    scaler.fit(values[:n_scale_rows])
+    return scaler.transform(values)
 
-    # MOE LSTM模型
-    input_seq = Input(shape=(lookback, len(feature_list)), name="Input_Sequence")
 
-    # LSTM Experts
-    lstm_expert_1 = LSTM(64, return_sequences=True, name="LSTM_Expert_1")(input_seq)
-    lstm_expert_2 = LSTM(64, return_sequences=True, name="LSTM_Expert_2")(input_seq)
-    lstm_expert_3 = LSTM(64, return_sequences=True, name="LSTM_Expert_3")(input_seq)
+def cluster_matrix(values: np.ndarray, n_scale_rows: int) -> np.ndarray:
+    """Scale on fit rows and return only that slice for feature selection."""
+    return scale_features(values, n_scale_rows)[:n_scale_rows]
 
-    # Flatten LSTM outputs
-    flat_expert_1 = Flatten(name="Flatten_Expert_1")(lstm_expert_1)
-    flat_expert_2 = Flatten(name="Flatten_Expert_2")(lstm_expert_2)
-    flat_expert_3 = Flatten(name="Flatten_Expert_3")(lstm_expert_3)
 
-    # Gating Network
-    gating_network = Dense(3, activation="softmax", name="Gating_Network")(input_seq[:, -1, :])
-
-    # 三个专家先堆成 (batch, 3, features)，再用 3 维门控加权。
-    # 若在特征维拼接，门控最后一维是 3，无法与拼接结果相乘。
-    stacked_experts = Lambda(lambda xs: K.stack(xs, axis=1), name="Stack_Experts")(
-        [flat_expert_1, flat_expert_2, flat_expert_3]
+def select_kmeans_features(
+    feature_matrix: np.ndarray,
+    names: list[str] | tuple[str, ...],
+    n_clusters: int = N_CLUSTERS,
+) -> list[str]:
+    if feature_matrix.ndim != 2 or feature_matrix.shape[1] != len(names):
+        raise ValueError("K-Means input must have one column per feature name.")
+    if feature_matrix.shape[1] < n_clusters:
+        raise ValueError(
+            f"K-Means needs at least {n_clusters} features. Got {feature_matrix.shape[1]}."
+        )
+    points = feature_matrix.T
+    model = KMeans(
+        n_clusters=n_clusters,
+        random_state=KMEANS_RANDOM_STATE,
+        n_init=KMEANS_N_INIT,
     )
-    weighted_sum = Lambda(
-        lambda x: K.sum(x[0] * K.expand_dims(x[1], axis=-1), axis=1),
+    labels = model.fit_predict(points)
+    selected = []
+    for cluster_id in range(n_clusters):
+        indices = np.flatnonzero(labels == cluster_id)
+        if len(indices) == 0:
+            continue
+        distances = np.linalg.norm(points[indices] - model.cluster_centers_[cluster_id], axis=1)
+        selected.append(names[int(indices[int(np.argmin(distances))])])
+    if not selected:
+        raise ValueError("K-Means selected no features.")
+    return selected
+
+
+def select_som_features(
+    feature_matrix: np.ndarray,
+    names: list[str] | tuple[str, ...],
+) -> list[str]:
+    if feature_matrix.ndim != 2 or feature_matrix.shape[1] != len(names):
+        raise ValueError("SOM input must have one column per feature name.")
+    points = feature_matrix.T
+    som = MiniSom(
+        SOM_ROWS,
+        SOM_COLS,
+        points.shape[1],
+        sigma=SOM_SIGMA,
+        learning_rate=SOM_LEARNING_RATE,
+        random_seed=SOM_SEED,
+    )
+    som.train_random(points, SOM_ITERATIONS)
+    grouped: dict[tuple[int, int], list[int]] = defaultdict(list)
+    for index, point in enumerate(points):
+        grouped[som.winner(point)].append(index)
+    weights = som.get_weights()
+    selected = []
+    for (row, col), members in grouped.items():
+        center = weights[row, col, :]
+        distances = [np.linalg.norm(points[index] - center) for index in members]
+        selected.append(names[members[int(np.argmin(distances))]])
+    if not selected:
+        raise ValueError("SOM selected no features.")
+    return selected
+
+
+def make_windows(
+    scaled: np.ndarray, labels: np.ndarray, lookback: int
+) -> tuple[np.ndarray, np.ndarray]:
+    n_windows = len(scaled) - lookback
+    if n_windows < 1:
+        raise ValueError("Not enough scaled rows to build a window.")
+    windows = np.empty((n_windows, lookback, scaled.shape[1]), dtype=float)
+    targets = np.empty(n_windows, dtype=int)
+    for index in range(n_windows):
+        windows[index] = scaled[index : index + lookback]
+        targets[index] = labels[index + lookback]
+    return windows, targets
+
+
+def prediction_rows(frame: pd.DataFrame, lookback: int, n_test: int) -> pd.DataFrame:
+    """Rows whose labels the test windows predict, in window order."""
+    n_windows = len(frame) - lookback
+    first_window = n_windows - n_test
+    first_row = first_window + lookback
+    rows = frame.iloc[first_row : first_row + n_test].copy()
+    if len(rows) != n_test:
+        raise ValueError(
+            f"Expected {n_test} backtest rows, found {len(rows)} in a frame of {len(frame)}."
+        )
+    return rows
+
+
+def session_gap_warning(dates: pd.Series) -> str | None:
+    gaps = pd.Series(dates).sort_values().diff().dt.days.dropna()
+    if gaps.empty:
+        return None
+    median_gap = float(gaps.median())
+    if 1 <= median_gap <= 3:
+        return None
+    return (
+        f"Warning: median date gap is {median_gap:g} days. "
+        f"Sharpe uses sqrt({ANNUALIZATION_DAYS}), which assumes one bar per trading session."
+    )
+
+
+def classification_scores(y_true, y_score, y_pred) -> dict[str, float]:
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    scores = {
+        "accuracy": float(accuracy_score(y_true, y_pred)),
+        "precision": float(precision_score(y_true, y_pred, zero_division=0)),
+        "recall": float(recall_score(y_true, y_pred, zero_division=0)),
+        "f1": float(f1_score(y_true, y_pred, zero_division=0)),
+    }
+    if np.unique(y_true).size < 2:
+        scores["auc_roc"] = float("nan")
+    else:
+        scores["auc_roc"] = float(roc_auc_score(y_true, y_score))
+    return scores
+
+
+def backtest(predictions, df_test: pd.DataFrame, model_name: str, fee: float = BACKTEST_FEE) -> dict:
+    """Long/short backtest on the forward close-to-close return.
+
+    ``Tomorrow_Change`` is the return from this close to the next close, which
+    is the return the label used. ``Daily_Return`` on the same row already
+    happened by that close, so it is not the strategy return.
+
+    The account is flat before the first test bar. Turnover is the absolute
+    position change, so opening from flat costs ``fee`` and a long-to-short
+    flip costs ``2 * fee``. An unchanged position costs nothing.
+    """
+    predicted = np.asarray(predictions)
+    if len(predicted) != len(df_test):
+        raise ValueError(
+            f"Prediction length {len(predicted)} does not match {len(df_test)} backtest rows."
+        )
+    if len(predicted) == 0:
+        raise ValueError("Backtest received no predictions.")
+    if not np.isin(predicted, (0, 1)).all():
+        raise ValueError("Predictions must be 0 or 1.")
+    if "Tomorrow_Change" not in df_test.columns:
+        raise ValueError("Backtest requires Tomorrow_Change.")
+    forward = df_test["Tomorrow_Change"].to_numpy(dtype=float)
+    if not np.isfinite(forward).all():
+        raise ValueError("Tomorrow_Change must be finite on every backtest row.")
+
+    position = np.where(predicted == 1, 1.0, -1.0)
+    previous = np.empty_like(position)
+    previous[0] = 0.0
+    if len(position) > 1:
+        previous[1:] = position[:-1]
+    turnover = np.abs(position - previous)
+    strategy = position * forward - fee * turnover
+
+    strategy_series = pd.Series(strategy, index=df_test.index)
+    equity = (1 + strategy_series).cumprod()
+    equity.name = f"{model_name}_Cumulative"
+    drawdown = (equity - equity.cummax()) / equity.cummax()
+    deviation = float(strategy_series.std(ddof=1))
+    if deviation == 0.0 or not np.isfinite(deviation):
+        sharpe_ratio = float("nan")
+    else:
+        sharpe_ratio = float(strategy_series.mean() / deviation * np.sqrt(ANNUALIZATION_DAYS))
+
+    return {
+        "Model": model_name,
+        "Total Return": float(equity.iloc[-1] - 1),
+        "Max Drawdown": float(drawdown.min()),
+        "Sharpe Ratio": sharpe_ratio,
+        "Cumulative": equity,
+    }
+
+
+def build_moe_model(lookback: int, n_features: int):
+    import tensorflow.keras.backend as K
+    from tensorflow.keras.layers import LSTM, Dense, Flatten, Input, Lambda
+    from tensorflow.keras.models import Model
+
+    inputs = Input(shape=(lookback, n_features), name="Input_Sequence")
+    experts = []
+    for index in range(1, 4):
+        sequence = LSTM(64, return_sequences=True, name=f"LSTM_Expert_{index}")(inputs)
+        experts.append(Flatten(name=f"Flatten_Expert_{index}")(sequence))
+    gate = Dense(3, activation="softmax", name="Gating_Network")(inputs[:, -1, :])
+    # Stack experts on a new axis so the 3 gate weights can scale them.
+    # Concatenating on the feature axis cannot broadcast against that gate.
+    stacked = Lambda(lambda tensors: K.stack(tensors, axis=1), name="Stack_Experts")(experts)
+    weighted = Lambda(
+        lambda pair: K.sum(pair[0] * K.expand_dims(pair[1], axis=-1), axis=1),
         name="Weighted_Sum",
-    )([stacked_experts, gating_network])
+    )([stacked, gate])
+    output = Dense(1, activation="sigmoid", name="Final_Output")(weighted)
+    model = Model(inputs=inputs, outputs=output, name="MOE_LSTM_Model")
+    model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+    return model
 
-    # Final output layer
-    final_output = Dense(1, activation="sigmoid", name="Final_Output")(weighted_sum)
 
-    # Compile model
-    moe_model = Model(inputs=input_seq, outputs=final_output, name="MOE_LSTM_Model")
-    moe_model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+def train_and_predict_moe(
+    frame: pd.DataFrame,
+    feature_list,
+    model_name: str,
+    lookback: int = LOOKBACK,
+    epochs: int = EPOCHS,
+    batch_size: int = BATCH_SIZE,
+    patience: int = PATIENCE,
+) -> dict:
+    """Fit one mixture on ``feature_list`` and score the untouched test windows."""
+    missing = [name for name in feature_list if name not in frame.columns]
+    if missing:
+        raise ValueError(f"Missing features {missing}.")
+    values = frame.loc[:, list(feature_list)].to_numpy(dtype=float)
+    labels = frame["Target"].to_numpy()
+    split = window_split(len(frame), lookback)
+    scaled = scale_features(values, split.n_scale_rows)
+    windows, targets = make_windows(scaled, labels, lookback)
+    n_train = split.n_fit + split.n_val
+    x_fit, y_fit = windows[: split.n_fit], targets[: split.n_fit]
+    x_val, y_val = windows[split.n_fit : n_train], targets[split.n_fit : n_train]
+    x_test, y_test = windows[n_train:], targets[n_train:]
 
-    # 训练模型
-    moe_model.fit(
-        X_train, y_train,
-        epochs=EPOCHS,
-        batch_size=16,
-        validation_data=(X_test, y_test),
-        callbacks=[EarlyStopping(patience=5, restore_best_weights=True)],
-        verbose=0
+    from tensorflow.keras.callbacks import EarlyStopping
+
+    model = build_moe_model(lookback, len(feature_list))
+    model.fit(
+        x_fit,
+        y_fit.astype("float32"),
+        epochs=epochs,
+        batch_size=batch_size,
+        validation_data=(x_val, y_val.astype("float32")),
+        callbacks=[EarlyStopping(patience=patience, restore_best_weights=True)],
+        verbose=0,
     )
-
-    # 生成预测结果
-    y_pred_proba = moe_model.predict(X_test).flatten()
-    y_pred = (y_pred_proba > 0.5).astype(int)
-
-    # 计算分类指标
-    accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
-    auc_roc = roc_auc_score(y_test, y_pred_proba)
-
-    # 输出详细分类报告（可选）
+    y_score = model.predict(x_test, verbose=0).flatten()
+    y_pred = (y_score > PREDICTION_THRESHOLD).astype(int)
+    scores = classification_scores(y_test, y_score, y_pred)
     print(f"\n===== {model_name} 分类报告 =====")
-    print(classification_report(y_test, y_pred))
-
-    # 返回结果
+    print(classification_report(y_test, y_pred, zero_division=0))
     return {
         "model_name": model_name,
         "y_test": y_test,
         "predictions": y_pred,
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1": f1,
-        "auc_roc": auc_roc,
-        "model": moe_model
+        "accuracy": scores["accuracy"],
+        "precision": scores["precision"],
+        "recall": scores["recall"],
+        "f1": scores["f1"],
+        "auc_roc": scores["auc_roc"],
+        "model": model,
     }
 
-# ## 封装回测函数
-# 
-# 统一回测逻辑，计算策略收益和关键指标。
 
-def backtest(predictions, df_test, model_name, fee=0.0005):
-    """
-    执行策略回测的函数。
-
-    参数:
-    ----------
-    predictions : array-like
-        模型输出的预测序列(0,1)。
-    df_test : pandas.DataFrame
-        对应测试集数据，包含日期和真实收益率。
-    model_name : str
-        策略/模型名称，便于区分。
-    fee : float, optional
-        每次交易的固定费率，默认为0.0005。
-
-    返回:
-    ----------
-    dict
-        包含回测关键指标和累积收益序列的字典。
-    """
-    # 对齐测试集数据
-    df_test = df_test.copy()
-    df_test["Prediction"] = predictions
-
-    # 生成持仓信号（1=做多，-1=做空）
-    df_test["Position"] = np.where(df_test["Prediction"] == 1, 1, -1)
-
-    # 计算策略收益率（扣除手续费）
-    df_test["Strategy_Return"] = df_test["Daily_Return"] * df_test["Position"]
-    df_test["Strategy_Return"] = df_test["Strategy_Return"] - fee  # 扣除手续费
-
-    # 计算累计净值
-    df_test[f"{model_name}_Cumulative"] = (1 + df_test["Strategy_Return"]).cumprod()
-
-    # 计算最大回撤
-    roll_max = df_test[f"{model_name}_Cumulative"].cummax()
-    df_test[f"{model_name}_Drawdown"] = (df_test[f"{model_name}_Cumulative"] - roll_max) / roll_max
-
-    # 汇总指标
-    total_return = df_test[f"{model_name}_Cumulative"].iloc[-1] - 1
-    max_drawdown = df_test[f"{model_name}_Drawdown"].min()
-    sharpe_ratio = (df_test["Strategy_Return"].mean() / df_test["Strategy_Return"].std()) * np.sqrt(252)
-
-    return {
-        "Model": model_name,
-        "Total Return": total_return,
-        "Max Drawdown": max_drawdown,
-        "Sharpe Ratio": sharpe_ratio,
-        "Cumulative": df_test[f"{model_name}_Cumulative"]
-    }
-
-# ## 运行三个模型并回测/收集指标
-
-# 全局参数
-LOOKBACK = 5  # 确保此前已定义
-
-# 训练并评估每个模型
-results = []
-for feature_cols, model_name in zip(
-    [manual_feature_cols, kmeans_feature_cols, som_feature_cols],
-    ["Manual", "KMeans", "SOM"]
-):
-    # 训练模型并获取结果
-    model_result = train_and_predict_moe(feature_cols, model_name, LOOKBACK)
-
-    # 执行回测
-    predictions = model_result["predictions"]
-
-    # 对齐测试集时间索引
-    test_start_index = len(df) - len(predictions) - LOOKBACK
-    df_test = df.iloc[test_start_index:].copy()
-    df_test = df_test.tail(len(predictions))
-
-    # 注意：以下语句要与上面的 for 循环对齐
-    backtest_result = backtest(predictions, df_test, model_name)
-
-    combined_result = {
-        "Model": model_name,
-        "y_test": model_result["y_test"],
-        "predictions": model_result["predictions"],
-        "Accuracy": model_result["accuracy"],
-        "Precision": model_result["precision"],
-        "Recall": model_result["recall"],
-        "F1": model_result["f1"],
-        "AUC-ROC": model_result["auc_roc"],
-        "Total Return": backtest_result["Total Return"],
-        "Max Drawdown": backtest_result["Max Drawdown"],
-        "Sharpe Ratio": backtest_result["Sharpe Ratio"]
-    }
-
-    # 这一步很重要，把回测里的净值序列也放进combined_result
-    combined_result["Cumulative"] = backtest_result["Cumulative"]
-
-    # 将该模型的所有结果记录到results
-    results.append(combined_result)
-
-# 循环结束后，可在这里对results做进一步处理或打印
-print(results)
-
-# ## 输出对比表格
-# 
-# 生成一个综合对比表格，包含分类指标和回测指标：
-
-# 生成对比表格
-metrics_df = pd.DataFrame(results)
-metrics_df = metrics_df[[
-    "Model",
-    "Accuracy", "Precision", "Recall", "F1", "AUC-ROC",
-    "Total Return", "Max Drawdown", "Sharpe Ratio"
-]]
-
-print("\n===== 模型性能对比 =====")
-print(metrics_df.round(3))
-
-# ## 可视化混淆矩阵（可选）
-# 
-# 为每个模型绘制混淆矩阵：
-
-plt.figure(figsize=(15, 4))
-for i, result in enumerate(results):
-    plt.subplot(1, 3, i+1)
-    cm = confusion_matrix(result["y_test"], result["predictions"])
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
-                xticklabels=["Down", "Up"],
-                yticklabels=["Down", "Up"])
-    plt.title(f"{result['Model']} Confusion Matrix")
-    plt.xlabel("Predicted")
-    plt.ylabel("True")
-plt.tight_layout()
-plt.show()
-
-# ## 可视化对比结果
-# 
-# 绘制三种模型的净值曲线和回撤曲线。
-
-plt.figure(figsize=(14, 7))
-
-# 绘制净值曲线
-for result in results:
-    plt.plot(df_test["Date"], result["Cumulative"], label=result["Model"])
-
-# 绘制基准（Buy & Hold）
-plt.plot(df_test["Date"], (1 + df_test["Daily_Return"]).cumprod(), label="Buy & Hold", linestyle="--")
-
-plt.title("Cumulative Returns Comparison")
-plt.xlabel("Date")
-plt.ylabel("Cumulative Return")
-plt.legend()
-plt.xticks(rotation=45)
-plt.show()
-
-# 绘制回撤曲线
-plt.figure(figsize=(14, 5))
-for result in results:
-    plt.plot(df_test["Date"], result["Cumulative"].pct_change(), label=result["Model"])
-
-plt.title("Daily Returns Comparison")
-plt.xlabel("Date")
-plt.ylabel("Daily Return")
-plt.legend()
-plt.show()
-
-# ## 输出关键指标
-# 
-# 生成表格对比三种模型的性能。
-
-# 汇总指标
-metrics_df = pd.DataFrame([{
-    "Model": result["Model"],
-    "Total Return": result["Total Return"],
-    "Max Drawdown": result["Max Drawdown"],
-    "Sharpe Ratio": result["Sharpe Ratio"]
-} for result in results])
-
-print(metrics_df)
-
-# -- Replace previous loop with a single MOE call --
-moe_result = train_and_predict_moe(manual_feature_cols, "MOE", LOOKBACK)
-
-test_start_index = len(df) - len(moe_result["predictions"]) - LOOKBACK
-df_test_moe = df.iloc[test_start_index:].copy()
-df_test_moe = df_test_moe.tail(len(moe_result["predictions"]))
-
-moe_backtest_result = backtest(moe_result["predictions"], df_test_moe, "MOE")
-print("\n===== MOE 模型回测指标 =====")
-print({
-    "Total Return": moe_backtest_result["Total Return"],
-    "Max Drawdown": moe_backtest_result["Max Drawdown"],
-    "Sharpe Ratio": moe_backtest_result["Sharpe Ratio"]
-})
+def buy_and_hold_equity(forward_returns: pd.Series) -> pd.Series:
+    """Uncosted equity of holding through the same forward returns as the strategy."""
+    return (1 + forward_returns).cumprod()
 
 
+def _show(plt) -> None:
+    """Display figures on an interactive backend and stay quiet under Agg."""
+    import matplotlib
+
+    if matplotlib.get_backend().lower() == "agg":
+        plt.close("all")
+        return
+    plt.show()
+
+
+def _print_overview(frame: pd.DataFrame) -> None:
+    print("===== 数据前几行 =====")
+    print(frame.head())
+    print("\n===== 数据信息 =====")
+    print(frame.info())
+    print("\n===== 描述统计 =====")
+    print(frame.describe())
+    print("\n===== 缺失值统计 =====")
+    print(frame.isnull().sum())
+
+
+def _plot_close(frame: pd.DataFrame) -> None:
+    import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(frame["Date"], frame["Close/Last"], label="Close Price")
+    axis = plt.gca()
+    axis.xaxis.set_major_locator(mdates.MonthLocator(interval=6))
+    axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    plt.title("Close Price over Time")
+    plt.xlabel("Date")
+    plt.ylabel("Price")
+    plt.legend()
+    plt.setp(axis.xaxis.get_majorticklabels(), rotation=45)
+    _show(plt)
+
+
+def _plot_correlation(frame: pd.DataFrame) -> None:
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    # Descriptive only. Feature selection uses the fit rows, not this matrix.
+    correlation = frame[list(MANUAL_FEATURE_COLUMNS)].corr()
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(correlation, annot=True, cmap="coolwarm")
+    plt.title("Correlation Matrix of Selected Features")
+    _show(plt)
+
+
+def _plot_results(results: list[dict], df_test: pd.DataFrame) -> None:
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    plt.figure(figsize=(15, 4))
+    for index, result in enumerate(results):
+        plt.subplot(1, len(results), index + 1)
+        matrix = confusion_matrix(result["y_test"], result["predictions"], labels=[0, 1])
+        sns.heatmap(
+            matrix,
+            annot=True,
+            fmt="d",
+            cmap="Blues",
+            xticklabels=["Down", "Up"],
+            yticklabels=["Down", "Up"],
+        )
+        plt.title(f"{result['Model']} Confusion Matrix")
+        plt.xlabel("Predicted")
+        plt.ylabel("True")
+    plt.tight_layout()
+    _show(plt)
+
+    plt.figure(figsize=(14, 7))
+    for result in results:
+        plt.plot(df_test["Date"], result["Cumulative"], label=result["Model"])
+    plt.plot(
+        df_test["Date"],
+        buy_and_hold_equity(df_test["Tomorrow_Change"]),
+        label="Buy & Hold",
+        linestyle="--",
+    )
+    plt.title("Cumulative Returns Comparison")
+    plt.xlabel("Date")
+    plt.ylabel("Cumulative Return")
+    plt.legend()
+    plt.xticks(rotation=45)
+    _show(plt)
+
+    # Percent change of each equity curve, including the first NaN point.
+    plt.figure(figsize=(14, 5))
+    for result in results:
+        plt.plot(df_test["Date"], result["Cumulative"].pct_change(), label=result["Model"])
+    plt.title("Daily Returns Comparison")
+    plt.xlabel("Date")
+    plt.ylabel("Daily Return")
+    plt.legend()
+    _show(plt)
+
+
+def _metrics_table(results: list[dict]) -> pd.DataFrame:
+    return pd.DataFrame([{column: result[column] for column in METRIC_COLUMNS} for result in results])
+
+
+def main(epochs: int | None = None) -> pd.DataFrame:
+    epochs = resolve_epochs(epochs)
+    data_path = resolve_data_path()
+    raw = load_price_csv(data_path)
+    _print_overview(raw)
+    _plot_close(raw)
+
+    try:
+        frame = build_feature_frame(raw, THRESHOLD)
+        split = window_split(len(frame), LOOKBACK)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+
+    warning = session_gap_warning(frame["Date"])
+    if warning:
+        print(warning)
+
+    print(frame[["Date", "Close/Last", "Daily_Return", "Tomorrow_Change", "Target"]].head(10))
+    balance_counts = frame["Target"].value_counts()
+    print("标签分布：")
+    print(balance_counts)
+    print("\n占比：")
+    print(balance_counts / len(frame))
+    _plot_correlation(frame)
+
+    manual = list(MANUAL_FEATURE_COLUMNS)
+    clustered = cluster_matrix(frame.loc[:, manual].to_numpy(dtype=float), split.n_scale_rows)
+    kmeans_columns = select_kmeans_features(clustered, manual, N_CLUSTERS)
+    som_columns = select_som_features(clustered, manual)
+    print("K-Means Selected Features:", kmeans_columns)
+    print("SOM Selected Features:", som_columns)
+
+    df_test = prediction_rows(frame, LOOKBACK, split.n_test)
+    results = []
+    for feature_columns, model_name in zip(
+        (manual, kmeans_columns, som_columns),
+        ("Manual", "KMeans", "SOM"),
+    ):
+        model_result = train_and_predict_moe(
+            frame,
+            feature_columns,
+            model_name,
+            LOOKBACK,
+            epochs=epochs,
+        )
+        if len(model_result["predictions"]) != len(df_test):
+            raise RuntimeError("Test prediction length does not match the backtest rows.")
+        backtest_result = backtest(model_result["predictions"], df_test, model_name)
+        results.append(
+            {
+                "Model": model_name,
+                "y_test": model_result["y_test"],
+                "predictions": model_result["predictions"],
+                "Accuracy": model_result["accuracy"],
+                "Precision": model_result["precision"],
+                "Recall": model_result["recall"],
+                "F1": model_result["f1"],
+                "AUC-ROC": model_result["auc_roc"],
+                "Total Return": backtest_result["Total Return"],
+                "Max Drawdown": backtest_result["Max Drawdown"],
+                "Sharpe Ratio": backtest_result["Sharpe Ratio"],
+                "Cumulative": backtest_result["Cumulative"],
+            }
+        )
+
+    metrics = _metrics_table(results)
+    print("\n===== 模型性能对比 =====")
+    print(metrics.round(3))
+    _plot_results(results, df_test)
+    print(metrics[["Model", "Total Return", "Max Drawdown", "Sharpe Ratio"]])
+    return metrics
+
+
+if __name__ == "__main__":
+    main()
