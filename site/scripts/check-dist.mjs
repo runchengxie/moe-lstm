@@ -38,9 +38,21 @@ const required = [
   "MOE_SECURITY",
   "Python 3.12",
   "TensorFlow 2.21.0",
+  "uv sync",
+  "uv sync --frozen",
+  "pyproject.toml",
+  "uv.lock",
+  "src/moe_lstm",
+  "37671ab",
+  "已合并",
+  "Merged",
+  "https://github.com/runchengxie/moe_lstm/pull/1",
   "https://github.com/runchengxie/moe_lstm/pull/2",
   "https://github.com/runchengxie/moe_lstm/pull/3",
   "https://github.com/runchengxie/moe_lstm/pull/4",
+  "https://github.com/runchengxie/moe_lstm/pull/5",
+  "https://github.com/runchengxie/moe_lstm/pull/6",
+  "https://github.com/runchengxie/moe_lstm/pull/7",
   "https://github.com/runchengxie/quant-backtest-engine",
   "https://runchengxie.github.io/moe_lstm/",
   "data-theme",
@@ -51,9 +63,27 @@ const required = [
   "THRESHOLD = 0.002",
 ];
 
+const forbidden = [
+  "Open pull requests",
+  "Open at write time",
+  "开放的 pull request",
+  "撰写时仍开放",
+  "开放 · 撰写时",
+  "Suggested merge order",
+  "建议的合并顺序",
+  "仍是下界",
+  "still lower bounds",
+];
+
 const missing = required.filter((needle) => !all.includes(needle) && !index.includes(needle));
 if (missing.length > 0) {
   console.error("check-dist: built site is missing:\n" + missing.map((item) => `  - ${item}`).join("\n"));
+  process.exit(1);
+}
+
+const stale = forbidden.filter((needle) => all.includes(needle) || index.includes(needle));
+if (stale.length > 0) {
+  console.error("check-dist: built site still has pre-merge copy:\n" + stale.map((item) => `  - ${item}`).join("\n"));
   process.exit(1);
 }
 
