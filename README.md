@@ -57,9 +57,9 @@ Loading, labels, the split, and the backtest do not import TensorFlow. `tests/te
 
 ## CI
 
-`.github/workflows/tests.yml` runs the unittest command above on pull requests and pushes, on `ubuntu-latest` with Python 3.12, after installing the pinned requirements.
+`.github/workflows/tests.yml` runs the unittest command above on pull requests and on pushes to `main`, on `ubuntu-latest` with Python 3.12, after installing the pinned requirements.
 
-`.github/workflows/smoke.yml` installs the same pins, byte-compiles `moe_lstm.py`, and trains one epoch on `tests/fixtures/tiny_bars.csv`:
+`.github/workflows/smoke.yml` runs on those same events. It installs the same pins, byte-compiles `moe_lstm.py`, and trains one epoch on `tests/fixtures/tiny_bars.csv`:
 
 ```bash
 python -m pip install -r requirements.txt

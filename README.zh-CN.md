@@ -57,9 +57,9 @@ python -m unittest discover -s tests -t . -v
 
 ## CI
 
-`.github/workflows/tests.yml` 在 pull request 和 push 上运行上面的 unittest。环境是 `ubuntu-latest` 和 Python 3.12，先安装锁定的依赖。
+`.github/workflows/tests.yml` 在 pull request 上，以及向 `main` 的 push 上，运行上面的 unittest。环境是 `ubuntu-latest` 和 Python 3.12，先安装锁定的依赖。
 
-`.github/workflows/smoke.yml` 安装同一套版本，对 `moe_lstm.py` 做字节编译，并用 `tests/fixtures/tiny_bars.csv` 训练一个 epoch：
+`.github/workflows/smoke.yml` 在同样的事件上运行。它安装同一套版本，对 `moe_lstm.py` 做字节编译，并用 `tests/fixtures/tiny_bars.csv` 训练一个 epoch：
 
 ```bash
 python -m pip install -r requirements.txt
