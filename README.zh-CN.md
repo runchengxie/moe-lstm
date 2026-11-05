@@ -4,49 +4,11 @@
 
 本文与英文文档描述同一套行为，事实以英文和代码为准。
 
-这是一个日频模型，用来判断指数下一根 K 线的收盘相对当根收盘是否上涨。脚本最初按标普 500 编写。它计算技术指标，用 K-Means 和自组织映射挑选特征子集，对每个子集训练一个 LSTM 混合专家，并打印多空回测与买入持有的对比。
+这是一份研究脚本，用来判断下一根 K 线的收盘相对当根是涨还是跌，模型是混合专家 LSTM（MoE-LSTM）。脚本按指数点位编写，最初针对标普 500。它会打印分类指标，以及多空回测和买入持有的对比。它不是交易系统。
 
-三个 LSTM 专家读取同一段窗口，差别来自初始化和学到的门控权重。脚本只打印类别数量，不做重采样。
+设置了 Hive Parquet 分钟线时，那就是主输入。否则回退到日频 CSV。仓库里没有行情。脚本自带的远程 CSV 地址在 2026-11-05 返回 HTTP 404，所以用 CSV 时必须给出本地路径。
 
-主输入是 Hive 分钟线。未设置 Parquet 根目录时，回退到日频 CSV。
-
-## Parquet 分钟线
-
-把 `MOE_DATA_PARQUET` 设为处理后的美股逐笔报价分钟线数据集根目录，目录形如：
-
-```text
-parquet/symbol=SYMBOL/security=HASH/year=YYYY/data.parquet
-```
-
-`MOE_SYMBOL` 是 ticker（`symbol=`）。同一个 ticker 有多个 `security=` 哈希时再设置 `MOE_SECURITY`。只有一个哈希时会自动选中。脚本读取每个 `year=` 文件，保留 `AuditSession == regular` 的行，并丢掉成交价为空的分钟（没有成交）。其余分钟按 `TimeBarStart` 排序（文件里只有成交时间时用 `FirstTradeTime`），再按日历日聚成一行。
-
-| 分钟字段 | 日线列 |
-| --- | --- |
-| 当天第一笔 `FirstTradePrice` | `Open` |
-| `HighTradePrice` 的最大值 | `High` |
-| `LowTradePrice` 的最小值 | `Low` |
-| 当天最后一笔 `LastTradePrice` | `Close/Last` |
-| `Volume` 之和 | `Volume` |
-
-文件里的 `Date` 是 `YYYYMMDD`。聚合后是 datetime。`Volume` 留在表上，不作为模型特征。指标、标签和回测与解析后的 CSV 走同一段代码。
-
-```bash
-export MOE_DATA_PARQUET=/path/to/dataset-root
-export MOE_SYMBOL=AAPL
-# export MOE_SECURITY=your-hash   # 同一 ticker 有多个 security 时才需要
-export MPLBACKEND=Agg
-uv run python moe_lstm.py
-```
-
-`MOE_DATA_PARQUET` 也可以直接指向 `parquet/` 目录。真实行情不放进本仓库。设置了 `MOE_DATA_PARQUET` 时，它优先于 `MOE_DATA_CSV`。
-
-```bash
-uv run python -m unittest tests.test_hive_daily_bars
-```
-
-这个检查会建一棵合成的 Hive 目录并比较日线 OHLCV，不需要 TensorFlow。`.github/workflows/parquet-loader.yml` 在 pull request 上，以及向 `main` 的 push 上运行它，并用 uv 只安装 pandas 和 pyarrow。下面的 CSV 约定只用于 `MOE_DATA_CSV`。
-
-## 环境
+## 快速开始
 
 在 Python 3.12 上核对过。先安装 [uv](https://docs.astral.sh/uv/) 0.13.7，然后在本目录执行：
 
@@ -54,119 +16,27 @@ uv run python -m unittest tests.test_hive_daily_bars
 uv sync
 ```
 
-`uv sync` 会创建 `.venv` 并安装锁定的依赖。`pyproject.toml` 锁定直接依赖。`uv.lock` 锁定完整解析结果。本仓库是脚本，不是可安装的包。`.python-version` 指定 Python 3.12，本机没有该版本时 uv 会安装它。
-
-直接依赖是 2026-11-05 在 Python 3.12 上能干净安装的那一组，再加上 Hive 加载用的 pyarrow 26.0.1：
-
-| 包 | 版本 |
-| --- | --- |
-| tensorflow | 2.21.0 |
-| keras | 3.15.1 |
-| pandas | 3.1.1 |
-| numpy | 2.5.4 |
-| scikit-learn | 1.9.1 |
-| minisom | 2.3.6 |
-| matplotlib | 3.11.2 |
-| seaborn | 0.13.2 |
-| pyarrow | 26.0.1 |
-
-Keras 单独锁定，是因为 TensorFlow 2.21.0 只要求 `keras>=3.12`。精确版本避免以后一次全新安装选到 pandas 4 或更新的 numpy。K-Means 显式使用 `n_init=10`，因为 scikit-learn 1.4 把默认值改成了 `auto`。
-
-## 运行
-
-仓库里没有行情。默认地址是 `runchengxie/quant_practice_3` 的 `historical_data.csv`。2026-11-05 访问该地址返回 HTTP 404，所以要指向本地文件：
+`uv sync` 会创建 `.venv` 并安装锁定的依赖。下面的样本是仓库里的一小份合成 CSV，不是行情：
 
 ```bash
-export MOE_DATA_CSV=/path/to/bars.csv
-export MPLBACKEND=Agg
-uv run python moe_lstm.py
+MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MPLBACKEND=Agg uv run python moe_lstm.py
 ```
 
-没有命令行参数。设置了 `MOE_DATA_PARQUET` 时，数据来自那个 Hive 根目录。否则数据来自 `MOE_DATA_CSV`。未设置时读取 `DEFAULT_DATA_URL`。该变量可以是本地路径，也可以是 `pandas.read_csv` 能打开的 URL。
-
-使用 Agg 后端时，脚本把图画出后关闭，不调用 `plt.show()`，因此不会出现无显示画布警告。只有交互式后端才会调用 `plt.show()`。
-
-一次运行训练三个模型：手工特征、K-Means 子集、SOM 子集。每个模型的批大小是 16，早停耐心为 5。`MOE_EPOCHS` 用来改 epoch 数。未设置时每个模型训练 50 个 epoch。网络、损失、批大小和耐心不变。在较小的 CPU 上，50 个 epoch 通常要几分钟。特征选择的随机种子是固定的，LSTM 训练不能逐位复现。在 Python 里调用 `moe_lstm.main(epochs=1)` 是同一种覆盖。显式传入的参数优先于 `MOE_EPOCHS`。
-
-## 测试
+Parquet 用环境变量打开。设置了 `MOE_DATA_PARQUET` 时，那个 Hive 根目录就是数据来源，并且优先于 `MOE_DATA_CSV`：
 
 ```bash
-uv run python -m unittest discover -s tests -t . -v
+MOE_DATA_PARQUET=/path/to/dataset-root MOE_SYMBOL=AAPL MPLBACKEND=Agg uv run python moe_lstm.py
 ```
 
-加载、标签、切分和回测不会导入 TensorFlow。安装了 TensorFlow 时，`tests/test_model.py` 会构建混合专家并执行 `main(epochs=1)`。未安装时这些测试跳过。
+## 你会看到什么
 
-## CI
+一次运行训练三个模型：手工特征、K-Means 子集、自组织映射子集。每个模型都是 LSTM 混合专家。三个专家读取同一段窗口，差别来自初始化和学到的门控。脚本只打印类别数量，不做重采样。然后打印分类指标，以及多空回测和买入持有的对比。
 
-`.github/workflows/tests.yml` 在 pull request 上，以及向 `main` 的 push 上，运行上面的 unittest。环境是 `ubuntu-latest` 和 Python 3.12，先执行 `uv sync --frozen`。
+## 更多说明
 
-`.github/workflows/smoke.yml` 在同样的事件上运行。它安装同一份锁，对 `moe_lstm.py` 做字节编译，并用 `tests/fixtures/tiny_bars.csv` 训练一个 epoch：
+- [数据](docs/data.zh-CN.md) — Parquet 目录、分钟线如何收成日线、CSV 列，以及 `MOE_DATA_PARQUET`、`MOE_SYMBOL`、`MOE_SECURITY`、`MOE_DATA_CSV`
+- [训练和回测](docs/training.zh-CN.md) — 窗口长度、切分、特征、标签阈值、费用和打印的指标
+- [环境](docs/setup.zh-CN.md) — uv、为什么钉住这些包、Python 3.12
+- [CI 和项目站点](docs/ci.zh-CN.md) — GitHub 工作流、冒烟用的样本、GitHub Pages
 
-```bash
-uv sync --frozen
-uv run python -m py_compile moe_lstm.py
-MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MOE_EPOCHS=1 MPLBACKEND=Agg uv run python moe_lstm.py
-```
-
-`tests/fixtures/tiny_bars.csv` 是符合上述列约定的 120 行合成序列，用来确认脚本能加载、拟合并打印指标。它不是真实行情。这条 workflow 给 TensorFlow 安装留了 30 分钟。如果 GitHub 托管 runner 装不上 TensorFlow，就在能安装的机器上跑这三条命令。`py_compile` 不会导入 TensorFlow。跑完后仍可能看到 TensorFlow 的 retracing 警告，因为每个特征子集都会单独建一个模型。不会再出现无显示画布警告。
-
-## CSV 约定
-
-必填列如下。其余列只出现在开头的预览里，不作为特征。额外列中的空值不会删除行情行。
-
-| 列 | 规则 |
-| --- | --- |
-| `Date` | 只用 `format="%m/%d/%Y"` 解析，例如 `01/13/2020` 或 `1/13/2020`。`2020-01-13` 这种 ISO 日期会失败。日期必须唯一。预览和模型都按日期顺序。 |
-| `Close/Last` | 有限且为正。指标、标签和回测都用这一列。 |
-| `Open` | 有限数值。作为特征。 |
-| `High` | 有限数值。作为特征。 |
-| `Low` | 有限数值。作为特征。 |
-
-价格必须已经是数字。带 `$` 或千分位分隔符会被拒绝。随后脚本丢掉 20 日滚动指标填不满的前导行，并丢掉最后一行，因为下一根收盘未知。文件至少要有 28 根 K 线，拟合、验证和测试窗口才能同时非空。
-
-交易日 `t` 的标签：从 `t` 到 `t+1` 的收盘收益率高于 `0.2%`（`THRESHOLD = 0.002`）时为 `1`，否则为 `0`。恰好等于 `0.2%` 时为 `0`。
-
-AlgoSeek 的美股 bar 不是这个表结构。请在单独的文件里把每个交易日映射成这些列名，并把日期写成 `%m/%d/%Y`（交易日写成 `Date`，开、高、低、收写成 `Open`、`High`、`Low`、`Close/Last`）。本脚本不会重命名供应商列名。
-
-## 样本、缩放和回测
-
-`LOOKBACK = 5`。去掉暖机行之后，窗口数是 `n_rows - 5`。前 80% 的窗口是训练段，后 20% 是测试段，按时间切分。训练段的最后 20% 用作早停验证，至少留一个验证窗口。
-
-`MinMaxScaler` 只在拟合窗口用到的特征行上拟合。K-Means（`N_CLUSTERS = 5`，`random_state=42`，`n_init=10`）和 3×3 的 SOM（`sigma=0.5`，学习率 `0.5`，100 次迭代，`random_seed=42`）只看这一段缩放后的数据。每个模型再对自己的特征子集做同一切片上的缩放。相关热力图只用于查看，仍然使用全样本。
-
-手工特征按这个顺序：
-
-`Close/Last`、`MA5`、`MA10`、`EMA5`、`EMA10`、`RSI`、`BB_upper`、`BB_lower`、`MACD`、`Signal_line`、`Daily_Return`、`Volatility`、`Open`、`High`、`Low`。
-
-RSI 是 14 日简单平均。一段里既没有上涨也没有下跌时取 50，没有下跌时取 100。布林带用 20 日均值和 2 倍标准差（pandas 的样本标准差）。MACD 是 12/26 EMA 之差，信号线是 9 日 EMA。K-Means 和 SOM 选出的列取决于拟合切片。
-
-测试集预测对到它所预测的那一行标签上。预测 `1` 做多（`+1`），`0` 做空（`-1`），sigmoid 阈值是 `0.5`。仓位赚取该行的 `Tomorrow_Change`，也就是当根收盘到下一根收盘的收益率，和标签用的是同一个收益。它不赚取该行的 `Daily_Return`，因为那个收益在当根收盘时已经实现。
-
-默认费用是每单位换手 `0.0005` 的收益率。第一根测试 K 线之前视为空仓，所以开仓成本是 `0.0005`。从多头翻到空头，仓位变化为 2，成本是 `0.001`。仓位不变时不收费。买入持有是同一组向前收益的累计乘积，不扣费用。
-
-总收益是期末净值减 1。最大回撤是 `净值 / 累计峰值 - 1` 的最小值，为零或负数。夏普率是策略收益的均值除以样本标准差，再乘以 `sqrt(252)`。这个年化假设每根 K 线对应一个交易日。如果日期间隔的中位数不在 1 到 3 天之内，脚本会打印警告，夏普率的算法不变。策略收益为常数时，夏普率是 `NaN`。测试标签只有一个类别时，AUC 是 `NaN`，其余分类指标使用 `zero_division=0`。
-
-输出列是 `Model`、`Accuracy`、`Precision`、`Recall`、`F1`、`AUC-ROC`、`Total Return`、`Max Drawdown`、`Sharpe Ratio`，模型名为 `Manual`、`KMeans`、`SOM`。
-
-## 项目站点
-
-[`site/`](site/) 是一份双语简报。默认中文，可以切到英文。颜色跟随 `prefers-color-scheme`，也可以固定为浅色、深色或系统。 [`.github/workflows/pages.yml`](.github/workflows/pages.yml) 只构建这个 Astro 应用（Node.js 26.13.0，版本写在 `site/.nvmrc`），并用 `actions/upload-pages-artifact` 和 `actions/deploy-pages` 发布 `site/dist`。它不安装 Python 依赖。
-
-工作流在 `main` 上成功之后，站点地址是 [https://runchengxie.github.io/moe_lstm/](https://runchengxie.github.io/moe_lstm/)。2026-11-05 这个地址返回 HTTP 404，因为还没有 Pages 部署。当时 Pages API 已经把 Source 报成 GitHub Actions（`build_type: workflow`）。
-
-### 打开 GitHub Pages
-
-1. 打开 **Settings → Pages**。
-2. 在 **Build and deployment** 里把 **Source** 设为 **GitHub Actions**（不要选 “Deploy from a branch”）。
-3. 把工作流合并到 `main`。改动 `site/`、这个工作流或根目录 `README.md` 的推送会跑 `pages`。`deploy` 只在 `main` 上运行。pull request 会构建站点，但不会发布。
-4. 如果第一次运行停在 `github-pages` 环境等待批准，批准那一次。发布地址是 https://runchengxie.github.io/moe_lstm/ 。
-
-如果 Source 已经是 GitHub Actions，第 2 步不用再点。npm 和 pnpm 的本地命令，以及 `/moe_lstm/` 这个 base，写在 [`site/README.md`](site/README.md)。
-
-```bash
-cd site
-npm ci
-npm run dev
-```
-
-打开 http://127.0.0.1:4321/moe_lstm/ 。用 pnpm 时，在 `site/` 里执行 `pnpm install` 然后 `pnpm dev`。持续集成使用 npm 和 `site/package-lock.json`。
+项目站点是 [https://runchengxie.github.io/moe_lstm/](https://runchengxie.github.io/moe_lstm/)。页面源码在 [`site/`](site/)。2026-11-05 这个地址返回 HTTP 404，因为还没有 Pages 部署。预览和发布步骤写在 [`site/README.md`](site/README.md)。
