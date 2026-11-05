@@ -1,3 +1,5 @@
+**English** | [简体中文](README.zh-CN.md)
+
 # MoE-LSTM
 
 Daily next-day up/down model for an index level (the script was written for the S&P 500). It builds technical features, picks feature subsets with K-Means and a self-organizing map, trains an LSTM mixture-of-experts, and prints a long/short backtest against buy-and-hold.
