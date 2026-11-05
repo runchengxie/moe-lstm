@@ -10,3 +10,5 @@ tensorflow==2.21.0
 keras==3.15.1
 scikit-learn==1.9.1
 minisom==2.3.6
+# Hive minute bars. The CSV path does not import this package.
+pyarrow==26.0.1

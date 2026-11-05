@@ -6,6 +6,44 @@ Daily next-session up/down model for an index level. The script was written for 
 
 The three LSTM experts read the same window. They differ by initialization and by the learned gate. The script prints class counts and does not resample.
 
+Hive minute bars are the primary input. A daily CSV is the fallback when the Parquet root is not set.
+
+## Parquet minute bars
+
+Set `MOE_DATA_PARQUET` to the dataset root that contains the processed US-equities trade-and-quote minute-bar release:
+
+```text
+parquet/symbol=SYMBOL/security=HASH/year=YYYY/data.parquet
+```
+
+`MOE_SYMBOL` is the ticker (`symbol=`). Set `MOE_SECURITY` when that ticker has more than one `security=` hash. If there is only one hash, it is selected for you. The script reads every `year=` file, keeps rows with `AuditSession == regular`, and drops minutes whose trade prices are blank (no trades). Remaining minutes are ordered by `TimeBarStart` (`FirstTradeTime` if that is the only clock) and rolled up to one row per calendar date.
+
+| Minute field | Daily column |
+| --- | --- |
+| first `FirstTradePrice` of the day | `Open` |
+| max `HighTradePrice` | `High` |
+| min `LowTradePrice` | `Low` |
+| last `LastTradePrice` of the day | `Close/Last` |
+| sum of `Volume` | `Volume` |
+
+`Date` in the file is `YYYYMMDD`. After aggregation it is a datetime. `Volume` stays on the frame and is not a model feature. Indicators, the label, and the backtest then use the same code as a parsed CSV.
+
+```bash
+export MOE_DATA_PARQUET=/path/to/dataset-root
+export MOE_SYMBOL=AAPL
+# export MOE_SECURITY=your-hash   # only when several securities share the ticker
+export MPLBACKEND=Agg
+python moe_lstm.py
+```
+
+The loader also accepts `MOE_DATA_PARQUET` pointed at the `parquet/` directory itself. Real market files stay outside this repo. When `MOE_DATA_PARQUET` is set it wins over `MOE_DATA_CSV`.
+
+```bash
+python -m unittest tests.test_hive_daily_bars
+```
+
+That check builds a synthetic Hive tree and compares the daily OHLCV. It does not need TensorFlow. `.github/workflows/parquet-loader.yml` runs it on pull requests and on pushes to `main`. The CSV contract below applies only to `MOE_DATA_CSV`.
+
 ## Setup
 
 Checked on Python 3.12.
@@ -28,6 +66,7 @@ pip install -r requirements.txt
 | minisom | 2.3.6 |
 | matplotlib | 3.11.2 |
 | seaborn | 0.13.2 |
+| pyarrow | 26.0.1 |
 
 Keras is pinned because TensorFlow 2.21.0 only requires `keras>=3.12`. Exact pins keep a later pandas 4 or a newer numpy from being selected on a fresh install. K-Means sets `n_init=10` because scikit-learn 1.4 changed the default to `auto`.
 
@@ -41,7 +80,7 @@ export MPLBACKEND=Agg
 python moe_lstm.py
 ```
 
-There is no argument parser. `MOE_DATA_CSV` is the only data setting. When it is unset, the script reads `DEFAULT_DATA_URL`. `MOE_DATA_CSV` may be a local path or any URL `pandas.read_csv` can open.
+There is no argument parser. When `MOE_DATA_PARQUET` is set, that Hive root is the data source. Otherwise `MOE_DATA_CSV` is the data setting. When it is unset, the script reads `DEFAULT_DATA_URL`. `MOE_DATA_CSV` may be a local path or any URL `pandas.read_csv` can open.
 
 With the Agg backend the script draws the figures and closes them, so `plt.show()` is not called and the headless canvas warning is not raised. An interactive backend still calls `plt.show()`.
 
