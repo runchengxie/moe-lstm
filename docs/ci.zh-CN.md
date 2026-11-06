@@ -44,16 +44,16 @@ uv run python -m unittest tests.test_hive_daily_bars
 
 [`site/`](../site/) 是一份双语简报。默认中文，可以切到英文。颜色跟随 `prefers-color-scheme`，也可以固定为浅色、深色或系统。[`.github/workflows/pages.yml`](../.github/workflows/pages.yml) 只构建这个 Astro 应用（Node.js 26.13.0，版本写在 `site/.nvmrc`），并用 `actions/upload-pages-artifact` 和 `actions/deploy-pages` 发布 `site/dist`。它不安装 Python 依赖。
 
-工作流在 `main` 上成功之后，站点地址是 [https://runchengxie.github.io/moe_lstm/](https://runchengxie.github.io/moe_lstm/)。2026-11-05 这个地址返回 HTTP 404，因为还没有 Pages 部署。当时 Pages API 已经把 Source 报成 GitHub Actions（`build_type: workflow`）。
+工作流在 `main` 上成功之后，站点地址是 [https://runchengxie.github.io/moe-lstm/](https://runchengxie.github.io/moe-lstm/)。2026-11-05 项目站点返回 HTTP 404，因为还没有 Pages 部署。当时 Pages API 已经把 Source 报成 GitHub Actions（`build_type: workflow`）。
 
 ### 打开 GitHub Pages
 
 1. 打开 **Settings → Pages**。
 2. 在 **Build and deployment** 里把 **Source** 设为 **GitHub Actions**（不要选 “Deploy from a branch”）。
 3. 把工作流合并到 `main`。改动 `site/`、`docs/`、这个工作流或根目录 `README.md` 的推送会跑 `pages`。`deploy` 只在 `main` 上运行。pull request 会构建站点，但不会发布。
-4. 如果第一次运行停在 `github-pages` 环境等待批准，批准那一次。发布地址是 https://runchengxie.github.io/moe_lstm/ 。
+4. 如果第一次运行停在 `github-pages` 环境等待批准，批准那一次。发布地址是 https://runchengxie.github.io/moe-lstm/ 。
 
-如果 Source 已经是 GitHub Actions，第 2 步不用再点。npm 和 pnpm 的本地命令，以及 `/moe_lstm/` 这个 base，写在 [`site/README.md`](../site/README.md)。
+如果 Source 已经是 GitHub Actions，第 2 步不用再点。npm 和 pnpm 的本地命令，以及 `/moe-lstm/` 这个 base，写在 [`site/README.md`](../site/README.md)。
 
 ```bash
 cd site
@@ -61,4 +61,4 @@ npm ci
 npm run dev
 ```
 
-打开 http://127.0.0.1:4321/moe_lstm/ 。用 pnpm 时，在 `site/` 里执行 `pnpm install` 然后 `pnpm dev`。持续集成使用 npm 和 `site/package-lock.json`。
+打开 http://127.0.0.1:4321/moe-lstm/ 。用 pnpm 时，在 `site/` 里执行 `pnpm install` 然后 `pnpm dev`。持续集成使用 npm 和 `site/package-lock.json`。

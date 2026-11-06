@@ -6,8 +6,8 @@ import { L, type Locale, type Localized } from "../i18n/copy";
 // Astro bundles this module under site/dist, so import.meta.url is not the source file.
 // `astro build` runs with the working directory set to site/.
 const docsDir = join(process.cwd(), "../docs");
-const repoBlob = "https://github.com/runchengxie/moe_lstm/blob/main/";
-const repoTree = "https://github.com/runchengxie/moe_lstm/tree/main/";
+const repoBlob = "https://github.com/runchengxie/moe-lstm/blob/main/";
+const repoTree = "https://github.com/runchengxie/moe-lstm/tree/main/";
 
 export const docPages = [
   { slug: "setup", en: "setup.md", zh: "setup.zh-CN.md" },

@@ -7,16 +7,16 @@ export const locales: Locale[] = ["zh", "en"];
 export const L = (zh: string, en: string): Localized => ({ zh, en });
 
 export const links = {
-  repo: "https://github.com/runchengxie/moe_lstm",
-  pr1: "https://github.com/runchengxie/moe_lstm/pull/1",
-  pr2: "https://github.com/runchengxie/moe_lstm/pull/2",
-  pr3: "https://github.com/runchengxie/moe_lstm/pull/3",
-  pr4: "https://github.com/runchengxie/moe_lstm/pull/4",
-  pr5: "https://github.com/runchengxie/moe_lstm/pull/5",
-  pr6: "https://github.com/runchengxie/moe_lstm/pull/6",
-  pr7: "https://github.com/runchengxie/moe_lstm/pull/7",
+  repo: "https://github.com/runchengxie/moe-lstm",
+  pr1: "https://github.com/runchengxie/moe-lstm/pull/1",
+  pr2: "https://github.com/runchengxie/moe-lstm/pull/2",
+  pr3: "https://github.com/runchengxie/moe-lstm/pull/3",
+  pr4: "https://github.com/runchengxie/moe-lstm/pull/4",
+  pr5: "https://github.com/runchengxie/moe-lstm/pull/5",
+  pr6: "https://github.com/runchengxie/moe-lstm/pull/6",
+  pr7: "https://github.com/runchengxie/moe-lstm/pull/7",
   engine: "https://github.com/runchengxie/quant-backtest-engine",
-  pages: "https://runchengxie.github.io/moe_lstm/",
+  pages: "https://runchengxie.github.io/moe-lstm/",
   defaultCsv:
     "https://raw.githubusercontent.com/runchengxie/quant_practice_3/refs/heads/main/historical_data.csv",
 } as const;
@@ -350,7 +350,7 @@ export const copy = {
     items: [
       {
         href: links.repo,
-        label: L("runchengxie/moe_lstm", "runchengxie/moe_lstm"),
+        label: L("runchengxie/moe-lstm", "runchengxie/moe-lstm"),
         note: L(
           "本仓库。脚本、`pyproject.toml`、`uv.lock` 和运行说明。",
           "This repository. Script, `pyproject.toml`, `uv.lock`, and how to run it.",
