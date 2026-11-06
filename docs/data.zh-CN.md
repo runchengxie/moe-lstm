@@ -73,7 +73,7 @@ uv run python -m unittest tests.test_hive_daily_bars
 
 交易日 `t` 的标签：从 `t` 到 `t+1` 的收盘收益率高于 `0.2%`（`THRESHOLD = 0.002`）时为 `1`，否则为 `0`。恰好等于 `0.2%` 时为 `0`。切分和回测里怎么用这个标签，写在 [训练和回测](training.zh-CN.md)。
 
-AlgoSeek 的美股 bar 不是这个表结构。请在单独的文件里把每个交易日映射成这些列名，并把日期写成 `%m/%d/%Y`（交易日写成 `Date`，开、高、低、收写成 `Open`、`High`、`Low`、`Close/Last`）。本脚本不会重命名供应商列名。
+AlgoSeek 美股 bar 用另一套列名。在单独的文件里，把每个交易日写成这五列，日期用 `%m/%d/%Y`。交易日写成 `Date`，开、高、低、收写成 `Open`、`High`、`Low`、`Close/Last`。脚本留下供应商原来的列名。
 
 ```bash
 export MOE_DATA_CSV=/path/to/bars.csv
