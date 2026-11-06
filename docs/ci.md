@@ -26,7 +26,7 @@ uv run python -m compileall -q src/moe_lstm
 MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MOE_EPOCHS=1 MPLBACKEND=Agg uv run moe-lstm
 ```
 
-`tests/fixtures/tiny_bars.csv` is a synthetic 120-row series in this column contract. It checks that the script can load, fit, and print metrics. It is not market data. The smoke workflow allows 30 minutes for the TensorFlow wheel. If a GitHub-hosted runner cannot install TensorFlow, run the three commands on a machine that can. `compileall` does not import TensorFlow. The smoke command is `uv run moe-lstm`. A finished run can still print TensorFlow retracing warnings, because each feature set builds its own model. It does not print a non-interactive canvas warning. `MOE_EPOCHS` and the Agg backend are described in [Training and backtest](training.md).
+`tests/fixtures/tiny_bars.csv` is a synthetic 120-row series in this column contract. It checks that the package can load, fit, and print metrics. Price files stay outside the repository. The smoke workflow allows 30 minutes for the TensorFlow wheel. If a GitHub-hosted runner cannot install TensorFlow, run the three commands on a machine that can. `compileall` does not import TensorFlow. The smoke command is `uv run moe-lstm`. A finished run can still print TensorFlow retracing warnings, because each feature set builds its own model. It does not print a non-interactive canvas warning. `MOE_EPOCHS` and the Agg backend are described in [Training and backtest](training.md).
 
 ## Parquet loader
 

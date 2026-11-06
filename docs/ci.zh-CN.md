@@ -28,7 +28,7 @@ uv run python -m compileall -q src/moe_lstm
 MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MOE_EPOCHS=1 MPLBACKEND=Agg uv run moe-lstm
 ```
 
-`tests/fixtures/tiny_bars.csv` 是符合上述列约定的 120 行合成序列，用来确认脚本能加载、拟合并打印指标。它不是真实行情。这条 workflow 给 TensorFlow 安装留了 30 分钟。如果 GitHub 托管 runner 装不上 TensorFlow，就在能安装的机器上跑这三条命令。`compileall` 不会导入 TensorFlow。冒烟命令是 `uv run moe-lstm`。跑完后仍可能看到 TensorFlow 的 retracing 警告，因为每个特征子集都会单独建一个模型。不会再出现无显示画布警告。`MOE_EPOCHS` 和 Agg 后端写在 [训练和回测](training.zh-CN.md)。
+`tests/fixtures/tiny_bars.csv` 是 120 行合成序列，列约定和上面的 CSV 一样。它用来确认包装得上、拟合得了、指标印得出来。行情文件留在仓库外面。这条 workflow 给 TensorFlow 安装留了 30 分钟。GitHub 托管 runner 装不上 TensorFlow 时，到能安装的机器上跑这三条命令。`compileall` 只做字节编译。冒烟命令是 `uv run moe-lstm`。跑完后，每个特征子集各自建一个模型，终端里可能出现 TensorFlow 的 retracing 警告。Agg 后端下，无显示画布那条警告不出现。`MOE_EPOCHS` 和 Agg 后端写在 [训练和回测](training.zh-CN.md)。
 
 ## Parquet 加载
 

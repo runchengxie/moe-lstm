@@ -35,8 +35,8 @@ export const ui = {
   navDocs: L("文档", "Docs"),
   navChangelog: L("变更", "Changelog"),
   footer: L(
-    "研究脚本，不提供交易信号。仓库和本站都不放行情。",
-    "A research script, with no trading signals. The repository and this site do not host market data.",
+    "脚本在终端打印指标。行情文件留在仓库外面。",
+    "The script prints metrics in the terminal. Price files stay outside the repository.",
   ),
 };
 
@@ -44,27 +44,27 @@ const merged = L("已合并", "Merged");
 
 export const copy = {
   meta: {
-    title: L("moe_lstm · 回测与结构", "moe_lstm · results and architecture"),
+    title: L("moe_lstm 回测和结构", "moe_lstm results and architecture"),
     description: L(
-      "MoE-LSTM 的回测位置还是占位，结构说明包括专家、门控、Hive Parquet 与 CSV 回退。研究脚本，不是交易系统。",
-      "Placeholder backtest slots for an MoE-LSTM, plus how the experts, gate, Hive Parquet path, and CSV fallback fit together. A research script, not a trading system.",
+      "回测格子空着。页面写下三个 LSTM 专家、门控、Hive Parquet，以及 CSV 回退。脚本在终端打印指标。",
+      "The backtest cells are empty. The page describes three LSTM experts, the gate, Hive Parquet, and the CSV fallback. The script prints metrics in the terminal.",
     ),
   },
   hero: {
     kicker: L("研究脚本", "Research script"),
-    title: L("下一交易日涨跌的 MoE-LSTM", "An MoE-LSTM for the next session"),
+    title: L("下一交易日收益的 MoE-LSTM", "An MoE-LSTM for the next session's return"),
     lede: L(
-      "三个 LSTM 专家加一个门控。首页先留出回测结果的位置，再说明数据怎么进来、窗口怎么切。",
-      "Three LSTM experts and a gate. The home page reserves a place for backtest results, then how data comes in and how the windows are split.",
+      "三个 LSTM 专家读同一段窗口。门控读最后一根。回测格子空着。",
+      "Three LSTM experts read one window. The gate reads the last bar. The backtest cells are empty.",
     ),
     notices: [
       {
         tone: "limit" as const,
-        text: L("研究脚本，不是交易系统。", "Research script, not a trading system."),
+        text: L("脚本在终端打印指标。", "The script prints metrics in the terminal."),
       },
       {
         tone: "limit" as const,
-        text: L("仓库和本站都没有行情数据。", "No market data in the repository or on this site."),
+        text: L("行情文件留在仓库外面。", "Price files stay outside the repository."),
       },
     ],
     asOf: L(
@@ -223,8 +223,8 @@ export const copy = {
       "`uv sync` installs from `pyproject.toml` and `uv.lock`. Smoke and unit CI use `uv sync --frozen`. There is no `requirements.txt`. The longer setup note is in `docs/setup.md`.",
     ),
     vendor: L(
-      "`docs/data.zh-CN.md` 说明 AlgoSeek 的美股 bar 不是上面的 CSV 列名，要在单独的文件里映射成这五列。Hive 分钟 Parquet 是另一条已在 main 上的路径：加载器按分钟字段聚合成这些日线列。未设置 Parquet 根目录时才走 CSV。",
-      "`docs/data.md` states that AlgoSeek US equity bars are not the CSV schema above. Map them onto these five columns in a separate file. Hive minute Parquet is a separate path already on main: the loader rolls minute fields up to these daily columns. CSV is used only when the Parquet root is unset.",
+      "`docs/data.zh-CN.md` 写着 AlgoSeek 美股 bar 用另一套列名。在单独的文件里映射成这五列。Hive 分钟 Parquet 是 main 上的另一条路径。加载器把分钟字段收成这些日线列。Parquet 根目录空着时，脚本读 CSV。",
+      "`docs/data.md` says AlgoSeek US equity bars use other column names. Map them onto these five columns in a separate file. Hive minute Parquet is another path already on main. The loader rolls minute fields up to these daily columns. When the Parquet root is empty, the script reads CSV.",
     ),
     defaultUrl: L(
       "默认 CSV URL，撰写 README 时返回 HTTP 404：",
@@ -385,14 +385,14 @@ export const showcase = {
   kicker: L("结果", "Results"),
   heading: L("回测展示", "Performance"),
   empty: L(
-    "这些格子是占位，不是结果。这里没有存任何一次运行。数字等 quant-backtest-engine 接上之后才会放进来。本页不编造收益、夏普或任何数值。",
-    "These cells are placeholders, not results. No run is stored here. Figures are coming once quant-backtest-engine is wired. This page does not invent returns, Sharpe ratios, or any other number.",
+    "这些格子是占位。适配器在仓库里。这一页没有存过运行记录。",
+    "These cells are placeholders. The adapter is in the repository. The page has no stored run.",
   ),
   chartTitle: L("权益曲线", "Equity"),
-  chartEmpty: L("占位，没有曲线", "Placeholder, no series"),
+  chartEmpty: L("格子空着，没有曲线", "The cell is empty. There is no series."),
   axisY: L("权益", "Equity"),
   axisX: L("测试窗口", "Test windows"),
-  tableCaption: L("脚本会打印的列。格子仍是空的。", "Columns the script prints. The cells are still empty."),
+  tableCaption: L("脚本会打印这些列。格子空着。", "The script prints these columns. The cells are empty."),
   modelHeading: L("模型", "Model"),
   models: [
     { id: "manual", name: "Manual" },
@@ -437,8 +437,8 @@ export const architecture = {
 export const changelogCopy = {
   title: L("变更", "Changelog"),
   lede: L(
-    "合并顺序放在这里，不放在首页。",
-    "The merge list lives here, not on the home page.",
+    "合并记录在这一页。",
+    "The merge list is on this page.",
   ),
 };
 
