@@ -27,7 +27,7 @@ if (!existsSync(indexPath)) {
 const index = readFileSync(indexPath, "utf8");
 
 const required = [
-  "/moe_lstm/",
+  "/moe-lstm/",
   "不是交易系统",
   "not a trading system",
   "No market data",
@@ -46,15 +46,15 @@ const required = [
   "37671ab",
   "已合并",
   "Merged",
-  "https://github.com/runchengxie/moe_lstm/pull/1",
-  "https://github.com/runchengxie/moe_lstm/pull/2",
-  "https://github.com/runchengxie/moe_lstm/pull/3",
-  "https://github.com/runchengxie/moe_lstm/pull/4",
-  "https://github.com/runchengxie/moe_lstm/pull/5",
-  "https://github.com/runchengxie/moe_lstm/pull/6",
-  "https://github.com/runchengxie/moe_lstm/pull/7",
+  "https://github.com/runchengxie/moe-lstm/pull/1",
+  "https://github.com/runchengxie/moe-lstm/pull/2",
+  "https://github.com/runchengxie/moe-lstm/pull/3",
+  "https://github.com/runchengxie/moe-lstm/pull/4",
+  "https://github.com/runchengxie/moe-lstm/pull/5",
+  "https://github.com/runchengxie/moe-lstm/pull/6",
+  "https://github.com/runchengxie/moe-lstm/pull/7",
   "https://github.com/runchengxie/quant-backtest-engine",
-  "https://runchengxie.github.io/moe_lstm/",
+  "https://runchengxie.github.io/moe-lstm/",
   "data-theme",
   "data-set-lang=\"en\"",
   "data-set-theme=\"system\"",
@@ -99,8 +99,8 @@ if (missingDocs.length > 0) {
   console.error("check-dist: docs routes are missing:\n" + missingDocs.map((item) => `  - ${item}`).join("\n"));
   process.exit(1);
 }
-if (!index.includes("/moe_lstm/docs/")) {
-  console.error("check-dist: home page does not link to /moe_lstm/docs/");
+if (!index.includes("/moe-lstm/docs/")) {
+  console.error("check-dist: home page does not link to /moe-lstm/docs/");
   process.exit(1);
 }
 const homeNeedles = [
@@ -130,13 +130,13 @@ const dataHtml = readFileSync(join(dist, "docs/data/index.html"), "utf8");
 const docNeedles = [
   "Hive minute bars are the primary input",
   "主输入是 Hive 分钟线",
-  "/moe_lstm/docs/setup/",
-  "/moe_lstm/docs/training/",
-  "/moe_lstm/docs/ci/",
+  "/moe-lstm/docs/setup/",
+  "/moe-lstm/docs/training/",
+  "/moe-lstm/docs/ci/",
   "data-locale=\"en\"",
   "data-locale=\"zh\"",
-  "https://github.com/runchengxie/moe_lstm/blob/main/README.md",
-  "https://github.com/runchengxie/moe_lstm/blob/main/docs/data.md",
+  "https://github.com/runchengxie/moe-lstm/blob/main/README.md",
+  "https://github.com/runchengxie/moe-lstm/blob/main/docs/data.md",
 ];
 const missingDocCopy = docNeedles.filter((needle) => !dataHtml.includes(needle));
 if (missingDocCopy.length > 0) {
@@ -150,11 +150,11 @@ for (const file of html) {
   const hrefs = [...text.matchAll(/\s(?:href|src)="([^"]+)"/g)].map((match) => match[1]);
   const localAssets = hrefs.filter((href) => href.includes("/_astro/") || href.endsWith(".svg") || href.endsWith(".css") || href.endsWith(".js"));
   for (const href of localAssets) {
-    if (href.startsWith("/") && !href.startsWith("/moe_lstm/")) unprefixed.push(`${file}: ${href}`);
+    if (href.startsWith("/") && !href.startsWith("/moe-lstm/")) unprefixed.push(`${file}: ${href}`);
   }
 }
 if (unprefixed.length > 0) {
-  console.error("check-dist: local assets are missing the /moe_lstm/ base:\n" + unprefixed.join("\n"));
+  console.error("check-dist: local assets are missing the /moe-lstm/ base:\n" + unprefixed.join("\n"));
   process.exit(1);
 }
 
