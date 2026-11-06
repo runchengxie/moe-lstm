@@ -1,6 +1,7 @@
 import contextlib
 import io
 import os
+import shutil
 import tempfile
 import unittest
 import warnings
@@ -46,6 +47,92 @@ class ModelTests(unittest.TestCase):
         gate = gate_model.predict(sample, verbose=0)
         self.assertEqual(gate.shape, (2, 3))
         np.testing.assert_allclose(gate.sum(axis=1), np.ones(2), atol=1e-5)
+
+    def _producer(self, tensor) -> str:
+        history = tensor._keras_history
+        operation = history.operation if hasattr(history, "operation") else history[0]
+        return operation.name
+
+    def test_sparse_top_k_gives_inactive_experts_zero_weight(self):
+        import tensorflow as tf
+
+        from moe_lstm.model import renormalized_top_k, switch_auxiliary_loss
+
+        probs = tf.constant([[0.7, 0.2, 0.1], [0.2, 0.5, 0.3]], dtype=tf.float32)
+        gated = renormalized_top_k(probs, k=1, n_experts=3).numpy()
+        self.assertEqual(gated.shape, (2, 3))
+        np.testing.assert_allclose(gated[0], [1.0, 0.0, 0.0], atol=1e-6)
+        np.testing.assert_allclose(gated[1], [0.0, 1.0, 0.0], atol=1e-6)
+        kept = renormalized_top_k(probs, k=2, n_experts=3).numpy()
+        np.testing.assert_allclose(kept[0], np.array([0.7, 0.2, 0.0]) / 0.9, atol=1e-5)
+        np.testing.assert_allclose(kept[1], np.array([0.0, 0.5, 0.3]) / 0.8, atol=1e-5)
+        self.assertTrue(np.all((kept == 0).sum(axis=1) == 1))
+        np.testing.assert_allclose(kept.sum(axis=1), np.ones(2), atol=1e-5)
+        loss = float(switch_auxiliary_loss(probs, k=1, n_experts=3))
+        # Both windows dispatch to a different expert, so f is not a point mass.
+        # Row means: P = [0.45, 0.35, 0.2]. Dispatch f = [0.5, 0.5, 0].
+        self.assertAlmostEqual(loss, 3 * (0.5 * 0.45 + 0.5 * 0.35), places=5)
+
+        model = moe_lstm.build_moe_model(lookback=5, n_features=3, top_k=1, aux_loss_weight=0)
+        self.assertEqual(model.output_shape, (None, 1))
+        self.assertEqual(self._producer(model.get_layer("Weighted_Sum").input[1]), "Sparse_Gate")
+        self.assertEqual(self._producer(model.get_layer("Sparse_Gate").input), "Gating_Network")
+        sample = np.random.default_rng(0).normal(size=(4, 5, 3)).astype("float32")
+        predicted = model.predict(sample, verbose=0)
+        self.assertEqual(predicted.shape, (4, 1))
+        router = keras_models.Model(model.input, model.get_layer("Gating_Network").output).predict(sample, verbose=0)
+        sparse = keras_models.Model(model.input, model.get_layer("Sparse_Gate").output).predict(sample, verbose=0)
+        self.assertEqual(sparse.shape, (4, 3))
+        np.testing.assert_allclose(sparse.sum(axis=1), np.ones(4), atol=1e-5)
+        self.assertTrue(np.all((sparse == 0).sum(axis=1) == 2))
+        for row in range(4):
+            chosen = int(np.argmax(router[row]))
+            self.assertEqual(int(np.flatnonzero(sparse[row] > 0)[0]), chosen)
+            self.assertAlmostEqual(float(sparse[row, chosen]), 1.0, places=5)
+
+        wider = moe_lstm.build_moe_model(lookback=4, n_features=2, n_experts=4, top_k=2, aux_loss_weight=0)
+        wider_sample = np.random.default_rng(1).normal(size=(3, 4, 2)).astype("float32")
+        self.assertEqual(wider.predict(wider_sample, verbose=0).shape, (3, 1))
+        wide_router = keras_models.Model(wider.input, wider.get_layer("Gating_Network").output).predict(
+            wider_sample, verbose=0
+        )
+        wide_gate = keras_models.Model(wider.input, wider.get_layer("Sparse_Gate").output).predict(
+            wider_sample, verbose=0
+        )
+        self.assertEqual(wide_gate.shape, (3, 4))
+        self.assertTrue(np.all((wide_gate == 0).sum(axis=1) == 2))
+        np.testing.assert_allclose(wide_gate.sum(axis=1), np.ones(3), atol=1e-5)
+        for row in range(3):
+            chosen = np.flatnonzero(wide_gate[row] > 0)
+            expected = wide_router[row, chosen] / wide_router[row, chosen].sum()
+            np.testing.assert_allclose(wide_gate[row, chosen], expected, atol=1e-5)
+
+    def test_dense_gate_keeps_every_expert_and_aux_loss_is_sparse_only(self):
+        dense = moe_lstm.build_moe_model(lookback=5, n_features=3, top_k=None)
+        self.assertEqual(self._producer(dense.get_layer("Weighted_Sum").input[1]), "Gating_Network")
+        with self.assertRaises(ValueError):
+            dense.get_layer("Sparse_Gate")
+        with self.assertRaises(ValueError):
+            dense.get_layer("Load_Balance")
+        sample = np.random.default_rng(2).normal(size=(2, 5, 3)).astype("float32")
+        gate = keras_models.Model(dense.input, dense.get_layer("Gating_Network").output).predict(sample, verbose=0)
+        self.assertEqual(dense.predict(sample, verbose=0).shape, (2, 1))
+        self.assertTrue(np.all(gate > 0))
+        np.testing.assert_allclose(gate.sum(axis=1), np.ones(2), atol=1e-5)
+        with self.assertRaises(ValueError):
+            moe_lstm.build_moe_model(lookback=5, n_features=3, top_k=None, aux_loss_weight=0.01)
+        with self.assertRaises(ValueError):
+            moe_lstm.build_moe_model(lookback=5, n_features=3, top_k=3)
+
+        sparse = moe_lstm.build_moe_model(lookback=5, n_features=3, top_k=1)
+        self.assertEqual(sparse.get_layer("Load_Balance").aux_weight, moe_lstm.AUX_LOSS_WEIGHT)
+        history = sparse.fit(
+            np.zeros((6, 5, 3), dtype="float32"),
+            np.array([0, 1, 0, 1, 0, 1], dtype="float32"),
+            epochs=1,
+            verbose=0,
+        )
+        self.assertTrue(np.isfinite(history.history["loss"]).all())
 
     def test_early_stopping_uses_the_validation_tail_not_the_test_windows(self):
         frame = _synthetic_frame()
@@ -100,10 +187,26 @@ class ModelTests(unittest.TestCase):
             csv_path = handle.name
         previous = os.environ.get("MOE_DATA_CSV")
         previous_oos = os.environ.get("MOE_OOS_CSV")
+        previous_results = os.environ.get("MOE_RESULTS_DIR")
         oos_path = csv_path + ".oos.csv"
+        results_dir = csv_path + ".results"
         os.environ["MOE_DATA_CSV"] = csv_path
         os.environ["MOE_OOS_CSV"] = oos_path
+        os.environ["MOE_RESULTS_DIR"] = results_dir
         stdout = io.StringIO()
+        saved_metrics = None
+        equity = None
+        held = None
+        figure_names = (
+            "close.png",
+            "correlation.png",
+            "confusion.png",
+            "equity.png",
+            "daily_returns.png",
+            "metrics.csv",
+            "equity.csv",
+            "buy_and_hold.csv",
+        )
         try:
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always")
@@ -118,7 +221,19 @@ class ModelTests(unittest.TestCase):
                 os.environ.pop("MOE_OOS_CSV", None)
             else:
                 os.environ["MOE_OOS_CSV"] = previous_oos
+            if previous_results is None:
+                os.environ.pop("MOE_RESULTS_DIR", None)
+            else:
+                os.environ["MOE_RESULTS_DIR"] = previous_results
             os.remove(csv_path)
+            present = {name: os.path.exists(os.path.join(results_dir, name)) for name in figure_names}
+            if os.path.exists(os.path.join(results_dir, "metrics.csv")):
+                saved_metrics = pd.read_csv(os.path.join(results_dir, "metrics.csv"))
+            if os.path.exists(os.path.join(results_dir, "equity.csv")):
+                equity = pd.read_csv(os.path.join(results_dir, "equity.csv"))
+            if os.path.exists(os.path.join(results_dir, "buy_and_hold.csv")):
+                held = pd.read_csv(os.path.join(results_dir, "buy_and_hold.csv"))
+            shutil.rmtree(results_dir, ignore_errors=True)
             if os.path.exists(oos_path):
                 saved = pd.read_csv(oos_path)
                 os.remove(oos_path)
@@ -141,6 +256,15 @@ class ModelTests(unittest.TestCase):
         self.assertIn("SOM Selected Features:", text)
         self.assertNotIn("MOE 模型回测指标", text)
         self.assertFalse(any("FigureCanvasAgg" in str(item.message) for item in caught))
+        missing = [name for name, exists in present.items() if not exists]
+        self.assertEqual(missing, [])
+        self.assertIsNotNone(saved_metrics)
+        self.assertEqual(list(saved_metrics["Model"]), ["Manual", "KMeans", "SOM"])
+        self.assertIsNotNone(equity)
+        self.assertEqual(list(equity.columns), ["Date", "Manual", "KMeans", "SOM", "Buy & Hold"])
+        self.assertIsNotNone(held)
+        self.assertEqual(list(held["Model"]), ["Buy & Hold"])
+        self.assertTrue(np.isfinite(held["Total Return"]).all())
 
 
 if __name__ == "__main__":

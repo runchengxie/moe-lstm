@@ -10,7 +10,21 @@ Column names and how a file becomes daily bars are in [Data](data.md).
 
 With the Agg backend the script draws the figures and closes them, so `plt.show()` is not called and the headless canvas warning is not raised. An interactive backend still calls `plt.show()`.
 
-Training fits three models (manual features, the K-Means subset, and the SOM subset). Each run uses batch size 16 and early stopping with patience 5. `MOE_EPOCHS` overrides the epoch count. Unset, each run uses 50 epochs. The network, loss, batch size, and patience do not change. On a small CPU a 50-epoch run is several minutes. Feature selection uses fixed seeds. LSTM training is not bitwise reproducible. From Python, `moe_lstm.main(epochs=1)` is the same override. An explicit argument wins over `MOE_EPOCHS`.
+Training fits three models (manual features, the K-Means subset, and the SOM subset). Each run uses batch size 16 and early stopping with patience 5. `MOE_EPOCHS` overrides the epoch count. Unset, each run uses 50 epochs. Batch size and patience do not change. The task loss is binary crossentropy. The gate below is separate from that. On a small CPU a 50-epoch run is several minutes. Feature selection uses fixed seeds. LSTM training is not bitwise reproducible. From Python, `moe_lstm.main(epochs=1)` is the same override. An explicit argument wins over `MOE_EPOCHS`.
+
+## Gate
+
+Each model is three LSTM experts. Expert `i` is `LSTM(64, return_sequences=True)` named `LSTM_Expert_i`, then a flatten. The three experts read the same window. They differ by initialization and by the learned router. They are not Transformer blocks. The router does not dispatch token by token inside the window. It reads one vector, the last bar.
+
+The router is a dense softmax named `Gating_Network`. Its width is the expert count, 3.
+
+The study default is a sparse top-1 gate (`TOP_K = 1`). The selected expert is kept and the other two weights are exactly 0. The kept router probabilities are renormalized so they sum to 1. For top-1 that weight is 1. Those are the weights in the weighted sum. A sigmoid then maps the sum to a probability. The cutoff stays 0.5.
+
+`MOE_TOP_K` overrides the count. `2` keeps two experts and renormalizes those two router probabilities. `dense`, `all`, or `none` leaves every softmax weight in place. From Python, `build_moe_model(..., top_k=None)` is that dense path and `top_k=2` is the two-expert path. `train_and_predict_moe(..., top_k=None)` is the same choice for one study model. An explicit argument wins over `MOE_TOP_K`. `top_k` has to be an integer from 1 through 2. Anything else raises. This is still an LSTM mixture, not a sparse Transformer MoE.
+
+On the sparse path, training adds a Switch-style load-balancing term. `P` is the mean router probability of each expert. `f` is the fraction of windows whose top-k includes that expert. The term is `n_experts * sum(f_i * P_i)`, multiplied by `AUX_LOSS_WEIGHT = 0.01`. It is attached with `add_loss`, so the model still has one sigmoid output and `predict` is still the probability the backtest uses. `MOE_AUX_LOSS=0` turns the extra term off. The dense path does not add it. A positive auxiliary weight together with the dense path raises.
+
+If `MOE_RESULTS_DIR` is set, the run also writes `metrics.csv` (the printed table), `equity.csv` (Manual, KMeans, SOM, and uncosted buy and hold), `buy_and_hold.csv`, and the figures `close.png`, `correlation.png`, `confusion.png`, `equity.png`, and `daily_returns.png`. The printed table stays Manual, KMeans, and SOM. Buy and hold in that file uses fee 0. It is not a fourth trained model.
 
 ## Sample, scaling, and backtest
 

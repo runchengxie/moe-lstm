@@ -93,8 +93,8 @@ export const copy = {
       {
         term: L("模型", "Model"),
         detail: L(
-          "三个 LSTM（各 64 单元，保留时间维）展平后堆在一起。门控是宽度为 3 的 softmax，只看输入的最后一根。加权求和后接 sigmoid，概率大于 0.5 判为涨。损失是 binary crossentropy，优化器是 Adam。",
-          "Three LSTMs (64 units, sequences kept) are flattened and stacked. The gate is a width-3 softmax on the last input bar only. A weighted sum feeds a sigmoid; a probability above 0.5 is up. Loss is binary crossentropy. The optimizer is Adam.",
+          "三个 LSTM（各 64 单元，保留时间维）展平后堆在一起。路由是宽度为 3 的 softmax，只看输入的最后一根。默认 top-1：选中的专家权重为 1，另外两个为 0，再做加权求和。`MOE_TOP_K=dense` 时三个权重都保留。后面接 sigmoid，概率大于 0.5 判为涨。任务损失是 binary crossentropy，优化器是 Adam。稀疏路径另加一项负载均衡辅助损失，系数 0.01。这是 LSTM 专家，不是 Transformer MoE。",
+          "Three LSTMs (64 units, sequences kept) are flattened and stacked. The router is a width-3 softmax on the last input bar only. The default is top-1: the selected expert has weight 1, the other two have weight 0, and those weights form the sum. `MOE_TOP_K=dense` keeps all three weights. A sigmoid follows. A probability above 0.5 is up. The task loss is binary crossentropy. The optimizer is Adam. The sparse path adds a load-balancing auxiliary term with coefficient 0.01. These are LSTM experts, not a Transformer MoE.",
         ),
       },
       {
@@ -116,7 +116,7 @@ export const copy = {
   arch: [
     { n: "1", k: L("输入", "Input"), v: L("5 根 × 选定列", "5 bars × selected columns") },
     { n: "2", k: L("专家", "Experts"), v: L("LSTM × 3，各 64", "LSTM × 3, 64 each") },
-    { n: "3", k: L("门控", "Gate"), v: L("softmax × 3", "softmax × 3") },
+    { n: "3", k: L("门控", "Gate"), v: L("默认 top-1，未选中为 0", "Default top-1. Unselected weights are 0") },
     { n: "4", k: L("输出", "Output"), v: L("sigmoid，阈值 0.5", "sigmoid, cutoff 0.5") },
   ],
   pipeline: {
@@ -147,8 +147,8 @@ export const copy = {
       {
         name: L("MoE", "MoE"),
         detail: L(
-          "Manual、KMeans、SOM 三个子集各训练一次同一个结构：三个 LSTM 专家加门控。",
-          "Manual, KMeans, and SOM each train the same architecture once: three LSTM experts and a gate.",
+          "Manual、KMeans、SOM 三个子集各训练一次同一个结构：三个 LSTM 专家。默认 top-1，没选中的权重是 0。`MOE_TOP_K=dense` 仍把三个 softmax 加在一起。",
+          "Manual, KMeans, and SOM each train the same architecture once: three LSTM experts. The default is top-1, and unselected weights are 0. `MOE_TOP_K=dense` still adds the three softmax weights.",
         ),
       },
       {
@@ -418,8 +418,22 @@ export const architecture = {
   kicker: L("结构", "Architecture"),
   heading: L("模型怎么接在一起", "How the model is put together"),
   lede: L(
-    "三个 LSTM 专家读同一段窗口，门控只看最后一根。数据以 Hive 分钟 Parquet 为主，CSV 是回退。",
-    "Three LSTM experts read the same window, and the gate sees only the last bar. Hive minute Parquet is the primary input. CSV is the fallback.",
+    "三个 LSTM 专家读同一段窗口。路由只看最后一根。默认只把权重留给 top-1 的那个专家，另外两个权重是 0。数据以 Hive 分钟 Parquet 为主，CSV 是回退。",
+    "Three LSTM experts read the same window. The router sees only the last bar. By default only the top expert keeps a weight, and the other two are 0. Hive minute Parquet is the primary input. CSV is the fallback.",
+  ),
+  flow: [
+    { n: "1", k: L("窗口", "Window"), v: L("三个 LSTM 读同一段 5 根", "Three LSTMs read the same 5 bars") },
+    { n: "2", k: L("路由", "Router"), v: L("只看最后一根，softmax 成 3 个数", "Last bar only, softmax to 3 numbers") },
+    {
+      n: "3",
+      k: L("top-k", "top-k"),
+      v: L("默认留下 1 个专家，权重为 1，其余为 0", "Default keeps 1 expert at weight 1. The rest are 0"),
+    },
+    { n: "4", k: L("输出", "Output"), v: L("加权求和后过 sigmoid", "Weighted sum, then a sigmoid") },
+  ],
+  sparseNote: L(
+    "没被选中的专家不进入求和，权重是 0。`MOE_TOP_K=dense` 时三个 softmax 权重都留下。专家是 LSTM，不是 Transformer 里按 token 分发的 MoE。",
+    "An expert that is not selected stays out of the sum, at weight 0. `MOE_TOP_K=dense` keeps all three softmax weights. The experts are LSTMs, not a token-wise Transformer MoE.",
   ),
   dataHeading: L("数据路径", "Data path"),
   data: L(
@@ -428,8 +442,8 @@ export const architecture = {
   ),
   splitHeading: L("窗口、切分和缩放", "Windows, split, and scaling"),
   split: L(
-    "回看 `LOOKBACK = 5`。窗口是特征行 t-5 到 t-1，标签是 t 到 t+1 的收盘收益。按时间，前 80% 的窗口训练，后 20% 测试。训练段最后 20% 做早停验证。`MinMaxScaler` 只在拟合窗口的特征行上拟合。标签高于 0.2%（`THRESHOLD = 0.002`）为 1，等于 0.2% 为 0。最多 50 个 epoch，batch 16，早停 patience 5。手工特征、K-Means（5 簇）、3×3 SOM 三个子集各训练一次同一结构。预测 1 做多，0 空仓，对照买入持有。",
-    "Lookback is `LOOKBACK = 5`. A window is feature rows t-5 through t-1, and the label is the close-to-close return from t to t+1. In time order, the first 80% of windows train and the last 20% test. The last 20% of the training block is the early-stopping validation set. `MinMaxScaler` is fit only on the feature rows of the fit windows. The label is 1 when that return is above 0.2% (`THRESHOLD = 0.002`), and 0 when it is equal to 0.2%. Up to 50 epochs, batch size 16, early-stopping patience 5. Manual features, K-Means (5 clusters), and a 3×3 SOM each train that same architecture once. A prediction of 1 is long and 0 is flat, set against buy and hold.",
+    "回看 `LOOKBACK = 5`。窗口是特征行 t-5 到 t-1，标签是 t 到 t+1 的收盘收益。按时间，前 80% 的窗口训练，后 20% 测试。训练段最后 20% 做早停验证。`MinMaxScaler` 只在拟合窗口的特征行上拟合。标签高于 0.2%（`THRESHOLD = 0.002`）为 1，等于 0.2% 为 0。最多 50 个 epoch，batch 16，早停 patience 5。手工特征、K-Means（5 簇）、3×3 SOM 三个子集各训练一次同一结构。默认门控是稀疏 top-1，选中的专家权重为 1。`MOE_TOP_K=dense` 时三个专家按 softmax 一起加权。预测 1 做多，0 空仓，对照买入持有。",
+    "Lookback is `LOOKBACK = 5`. A window is feature rows t-5 through t-1, and the label is the close-to-close return from t to t+1. In time order, the first 80% of windows train and the last 20% test. The last 20% of the training block is the early-stopping validation set. `MinMaxScaler` is fit only on the feature rows of the fit windows. The label is 1 when that return is above 0.2% (`THRESHOLD = 0.002`), and 0 when it is equal to 0.2%. Up to 50 epochs, batch size 16, early-stopping patience 5. Manual features, K-Means (5 clusters), and a 3×3 SOM each train that same architecture once. The default gate is sparse top-1, so the selected expert has weight 1. `MOE_TOP_K=dense` weights all three experts with the softmax. A prediction of 1 is long and 0 is flat, set against buy and hold.",
   ),
   more: L("列约定、费用和打印的指标在文档里。", "Column rules, fees, and the printed metrics are in the docs."),
 };

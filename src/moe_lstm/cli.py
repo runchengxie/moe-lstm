@@ -19,14 +19,71 @@ from moe_lstm.data import (
 from moe_lstm.eval import backtest, buy_and_hold_equity, oos_probability_frame, write_oos_probabilities
 from moe_lstm.train import resolve_epochs, train_and_predict_moe
 
+_FIGURE_NAMES = {
+    "Close Price over Time": "close.png",
+    "Correlation Matrix of Selected Features": "correlation.png",
+    "Cumulative Returns Comparison": "equity.png",
+    "Daily Returns Comparison": "daily_returns.png",
+}
+
+
+def _figure_filename(figure, number: int) -> str:
+    titles = [axis.get_title() or "" for axis in figure.axes]
+    if any("Confusion Matrix" in title for title in titles):
+        return "confusion.png"
+    for title in titles:
+        if title in _FIGURE_NAMES:
+            return _FIGURE_NAMES[title]
+    return f"figure_{number}.png"
+
+
 def _show(plt) -> None:
-    """Display figures on an interactive backend and stay quiet under Agg."""
+    """Display figures on an interactive backend and stay quiet under Agg.
+
+    ``MOE_RESULTS_DIR`` saves each open figure before the backend closes it.
+    """
     import matplotlib
 
+    results_dir = os.environ.get("MOE_RESULTS_DIR", "").strip()
+    if results_dir:
+        os.makedirs(results_dir, exist_ok=True)
+        for number in plt.get_fignums():
+            figure = plt.figure(number)
+            figure.savefig(
+                os.path.join(results_dir, _figure_filename(figure, number)),
+                dpi=140,
+                bbox_inches="tight",
+                facecolor=figure.get_facecolor(),
+            )
     if matplotlib.get_backend().lower() == "agg":
         plt.close("all")
         return
     plt.show()
+
+
+def _write_result_tables(metrics: pd.DataFrame, results: list[dict], df_test: pd.DataFrame) -> None:
+    """Write the printed metrics, equity curves, and uncosted buy and hold."""
+    results_dir = os.environ.get("MOE_RESULTS_DIR", "").strip()
+    if not results_dir:
+        return
+    os.makedirs(results_dir, exist_ok=True)
+    metrics.to_csv(os.path.join(results_dir, "metrics.csv"), index=False)
+    equity = pd.DataFrame({"Date": pd.Series(df_test["Date"]).reset_index(drop=True)})
+    for result in results:
+        equity[result["Model"]] = pd.Series(result["Cumulative"]).reset_index(drop=True).to_numpy()
+    equity["Buy & Hold"] = buy_and_hold_equity(df_test["Tomorrow_Change"]).reset_index(drop=True).to_numpy()
+    equity.to_csv(os.path.join(results_dir, "equity.csv"), index=False)
+    held = backtest([1] * len(df_test), df_test, "Buy & Hold", fee=0.0)
+    pd.DataFrame(
+        [
+            {
+                "Model": "Buy & Hold",
+                "Total Return": held["Total Return"],
+                "Max Drawdown": held["Max Drawdown"],
+                "Sharpe Ratio": held["Sharpe Ratio"],
+            }
+        ]
+    ).to_csv(os.path.join(results_dir, "buy_and_hold.csv"), index=False)
 
 
 def _print_overview(frame: pd.DataFrame) -> None:
@@ -206,6 +263,7 @@ def main(epochs: int | None = None) -> pd.DataFrame:
     print("\n===== 模型性能对比 =====")
     print(metrics.round(3))
     _plot_results(results, df_test)
+    _write_result_tables(metrics, results, df_test)
     print(metrics[["Model", "Total Return", "Max Drawdown", "Sharpe Ratio"]])
     return metrics
 
