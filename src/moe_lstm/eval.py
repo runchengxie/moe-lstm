@@ -1,6 +1,7 @@
-"""Classification scores and the in-process long/short backtest.
+"""Classification scores and the in-process long-or-flat backtest.
 
 This backtest is the study printout. It is not the quant-backtest-engine ledger.
+Class 0 means the forward return did not clear the threshold. It is flat, not short.
 """
 
 import numpy as np
@@ -14,6 +15,7 @@ from sklearn.metrics import (
 )
 
 from moe_lstm.constants import ANNUALIZATION_DAYS, BACKTEST_FEE
+from moe_lstm.signals import study_positions
 
 def classification_scores(y_true, y_score, y_pred) -> dict[str, float]:
     y_true = np.asarray(y_true)
@@ -32,15 +34,20 @@ def classification_scores(y_true, y_score, y_pred) -> dict[str, float]:
 
 
 def backtest(predictions, df_test: pd.DataFrame, model_name: str, fee: float = BACKTEST_FEE) -> dict:
-    """Long/short backtest on the forward close-to-close return.
+    """Long-or-flat backtest on the forward close-to-close return.
 
     ``Tomorrow_Change`` is the return from this close to the next close, which
     is the return the label used. ``Daily_Return`` on the same row already
     happened by that close, so it is not the strategy return.
 
-    The account is flat before the first test bar. Turnover is the absolute
-    position change, so opening from flat costs ``fee`` and a long-to-short
-    flip costs ``2 * fee``. An unchanged position costs nothing.
+    Prediction 1 is long (+1). Prediction 0 is flat (0), because that class
+    includes small gains as well as declines. The account starts at 1, flat,
+    before the first test bar. Turnover is the absolute position change, so
+    opening or closing a long costs ``fee`` once. Staying flat earns nothing
+    and pays nothing.
+
+    Max drawdown uses a running peak that is at least 1, so a loss from the
+    starting equity is a drawdown even when every later equity is lower still.
     """
     predicted = np.asarray(predictions)
     if len(predicted) != len(df_test):
@@ -57,7 +64,7 @@ def backtest(predictions, df_test: pd.DataFrame, model_name: str, fee: float = B
     if not np.isfinite(forward).all():
         raise ValueError("Tomorrow_Change must be finite on every backtest row.")
 
-    position = np.where(predicted == 1, 1.0, -1.0)
+    position = study_positions(predicted)
     previous = np.empty_like(position)
     previous[0] = 0.0
     if len(position) > 1:
@@ -68,7 +75,8 @@ def backtest(predictions, df_test: pd.DataFrame, model_name: str, fee: float = B
     strategy_series = pd.Series(strategy, index=df_test.index)
     equity = (1 + strategy_series).cumprod()
     equity.name = f"{model_name}_Cumulative"
-    drawdown = (equity - equity.cummax()) / equity.cummax()
+    running_peak = equity.cummax().clip(lower=1.0)
+    drawdown = (equity - running_peak) / running_peak
     deviation = float(strategy_series.std(ddof=1))
     if deviation == 0.0 or not np.isfinite(deviation):
         sharpe_ratio = float("nan")

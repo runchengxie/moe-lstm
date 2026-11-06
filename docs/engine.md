@@ -4,7 +4,7 @@
 
 [Project README](../README.md) · [Training and backtest](training.md) · [Data](data.md)
 
-The printed long/short result still comes from `moe_lstm.backtest`. Prediction `1` is position `+1` and prediction `0` is position `-1`. That function is unchanged.
+The printed result comes from `moe_lstm.backtest`. Prediction `1` is position `+1` and prediction `0` is position `0` (flat). The engine weight uses the same map.
 
 [quant-backtest-engine](https://github.com/runchengxie/quant-backtest-engine) is a separate program. Its Python client is `quant_backtest_engine.EngineClient`. `size` turns a nonnegative target weight into a share plan. `run_sessions` submits orders against quotes you supply and returns fills, fees, and a daily ledger. This repository does not reimplement that accounting.
 
@@ -15,7 +15,7 @@ The printed long/short result still comes from `moe_lstm.backtest`. Prediction `
 | Study prediction | In-process position | Engine target weight |
 | --- | --- | --- |
 | `1` | `+1` | `"1"` |
-| `0` | `-1` | `"0"` (flat, not a short sale) |
+| `0` | `0` (flat) | `"0"` |
 
 Weights are nonnegative and the single-symbol weight is at most one. `sizing_request_for_signal` builds one `sizing_request.v1`. The reference price has to be a decimal string timestamped no later than the information time. `session_request_for_order` builds one `engine_request.v2` session around an order you already have, including an order returned by `size`. Quotes in that request are the strings you pass. They are not loaded from a vendor file in this repo.
 

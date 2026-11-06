@@ -2,8 +2,9 @@
 
 The package reads daily OHLC bars, builds technical features, selects subsets
 with K-Means and a self-organizing map, and trains one LSTM mixture on each
-subset. A prediction of 1 is long and 0 is short. The in-process backtest earns
-the next close-to-close return. Feature selection seeds are fixed. LSTM training
+subset. A prediction of 1 is long and 0 is flat: class 0 did not clear the
+threshold, so it is not a short. The in-process backtest earns the next
+close-to-close return only while long. Feature selection seeds are fixed. LSTM training
 is not bitwise reproducible.
 
 ``MOE_DATA_PARQUET`` loads Hive minute bars and aggregates one row per session.

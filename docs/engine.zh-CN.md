@@ -6,7 +6,7 @@
 
 [项目说明](../README.zh-CN.md) · [训练和回测](training.zh-CN.md) · [数据](data.zh-CN.md)
 
-脚本打印的多空结果仍来自 `moe_lstm.backtest`。预测 `1` 是仓位 `+1`，预测 `0` 是仓位 `-1`。这个函数没有改。
+脚本打印的结果来自 `moe_lstm.backtest`。预测 `1` 是仓位 `+1`，预测 `0` 是仓位 `0`（空仓）。引擎权重用的是同一套映射。
 
 [quant-backtest-engine](https://github.com/runchengxie/quant-backtest-engine) 是另一个程序。Python 客户端是 `quant_backtest_engine.EngineClient`。`size` 把非负目标权重变成股数计划。`run_sessions` 用你提供的报价提交订单，并返回成交、费用和日度账本。本仓库不另写一套会计。
 
@@ -17,7 +17,7 @@
 | 研究预测 | 进程内仓位 | 引擎目标权重 |
 | --- | --- | --- |
 | `1` | `+1` | `"1"` |
-| `0` | `-1` | `"0"`（空仓，不是卖空） |
+| `0` | `0`（空仓） | `"0"` |
 
 权重非负，单标的权重至多为 1。`sizing_request_for_signal` 构造一份 `sizing_request.v1`。参考价必须是十进制字符串，时间不得晚于信息时间。`session_request_for_order` 围绕一笔已经有的订单构造一份 `engine_request.v2`，订单可以来自 `size`。请求里的报价就是传入的字符串，不是本仓库里的行情文件。
 

@@ -80,8 +80,8 @@ def _plot_results(results: list[dict], df_test: pd.DataFrame) -> None:
             annot=True,
             fmt="d",
             cmap="Blues",
-            xticklabels=["Down", "Up"],
-            yticklabels=["Down", "Up"],
+            xticklabels=["Not above", "Above"],
+            yticklabels=["Not above", "Above"],
         )
         plt.title(f"{result['Model']} Confusion Matrix")
         plt.xlabel("Predicted")

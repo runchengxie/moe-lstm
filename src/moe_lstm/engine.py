@@ -6,8 +6,7 @@ module builds those requests and, when asked, calls the engine client. It does
 not compute returns or a Sharpe ratio.
 
 A study prediction of 1 is target weight ``1``. A prediction of 0 is weight
-``0`` (flat). The engine rejects negative weights, so this path is not the
-in-process long/short ``backtest``.
+``0`` (flat), the same position the in-process backtest takes.
 """
 
 from __future__ import annotations

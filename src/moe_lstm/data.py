@@ -138,6 +138,10 @@ def relative_strength_index(close: pd.Series, window: int = 14) -> pd.Series:
 
 
 def label_directions(forward_returns: pd.Series, threshold: float = THRESHOLD) -> pd.Series:
+    """1 only when the forward return is strictly above ``threshold``.
+
+    0 is every other finite return, including small gains. It is not a down label.
+    """
     values = forward_returns.to_numpy(dtype=float)
     if not np.isfinite(values).all():
         raise ValueError("Forward returns must be finite before labeling.")
@@ -301,6 +305,12 @@ def select_som_features(
 def make_windows(
     scaled: np.ndarray, labels: np.ndarray, lookback: int
 ) -> tuple[np.ndarray, np.ndarray]:
+    """Window ``i`` is feature rows ``i .. i+lookback-1``.
+
+    Its label is row ``i+lookback``, the first row after the window. That row's
+    forward return starts at its close and ends at the next close, so the
+    window does not contain the close where the label becomes known.
+    """
     n_windows = len(scaled) - lookback
     if n_windows < 1:
         raise ValueError("Not enough scaled rows to build a window.")
