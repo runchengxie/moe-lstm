@@ -1,6 +1,6 @@
 # moe_lstm 项目简报
 
-`site/` 是一个很小的 Astro 静态站。首页是回测占位和模型结构，文档在 `/moe-lstm/docs/`，合并记录在 `/moe-lstm/changelog/`。页面默认中文，可以切到英文；颜色跟随系统的 `prefers-color-scheme`，也可以改成浅色或深色。
+`site/` 是一个很小的 Astro 静态站。首页是一次真实运行的回测和模型结构，文档在 `/moe-lstm/docs/`，合并记录在 `/moe-lstm/changelog/`。页面默认中文，可以切到英文；颜色跟随系统的 `prefers-color-scheme`，也可以改成浅色或深色。
 
 站点地址：
 
@@ -67,7 +67,7 @@ pnpm preview
 
 ## 内容从哪来
 
-文案在 `src/i18n/copy.ts`，中英文字段写在一起。页面描述脚本、已经在 `main` 上的改动，以及还没做的两件事（`src/moe_lstm/` 和 quant-backtest-engine）。不记录任何一次回测数字，也不放行情。
+文案在 `src/i18n/copy.ts`，中英文字段写在一起。首页写下 2026-11-06 的 ^GSPC 日线运行，数字在 `public/results/run.json`。行情文件不进仓库。文档页读取仓库根目录 `docs/`。
 
 文档页读取仓库根目录 `docs/` 里的中英 Markdown（环境、数据、训练、CI），不另起一套文案。
 
@@ -75,7 +75,7 @@ pnpm preview
 
 # Project brief
 
-`site/` is a small Astro static site. The home page is a backtest placeholder plus the model layout. Docs are at `/moe-lstm/docs/`. The merge list is at `/moe-lstm/changelog/`. Chinese is the default; English is a switch on the page. Color follows `prefers-color-scheme`, with an explicit light, dark, or system choice.
+`site/` is a small Astro static site. The home page is one real run plus the model layout. Docs are at `/moe-lstm/docs/`. The merge list is at `/moe-lstm/changelog/`. Chinese is the default; English is a switch on the page. Color follows `prefers-color-scheme`, with an explicit light, dark, or system choice.
 
 Live URL:
 
@@ -137,6 +137,6 @@ The workflow is already on `main` (#7, `37671ab`). When #7 was written, Source w
 
 ## Where the words live
 
-Copy is in `src/i18n/copy.ts`, with Chinese and English on the same fields. The page describes the script, what is already on `main`, and the two items that are not done yet (`src/moe_lstm/` and quant-backtest-engine). It records no backtest figures and hosts no market data.
+Copy is in `src/i18n/copy.ts`, with Chinese and English on the same fields. The home page records the 2026-11-06 ^GSPC daily run. The numbers live in `public/results/run.json`. The price file stays out of the repository.
 
 The docs routes read the bilingual Markdown in the repository `docs/` folder (setup, data, training, CI). They do not keep a second copy of that text.

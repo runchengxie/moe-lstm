@@ -23,6 +23,7 @@ const docsLink = L("文档", "Docs");
           ))
         }
       </ul>
+      <p class="asof"><Tx text={copy.hero.asOf} /></p>
     </header>
 
     <section class="block" id="results" aria-labelledby="results-heading">
@@ -37,11 +38,28 @@ const docsLink = L("文档", "Docs");
 
         <figure class="chart-slot">
           <figcaption><Tx text={showcase.chartTitle} /></figcaption>
-          <div class="chart-frame" data-chart="equity" data-value="empty">
-            <span class="chart-y"><Tx text={showcase.axisY} /></span>
-            <span class="chart-plot"><Tx text={showcase.chartEmpty} /></span>
-            <span class="chart-x"><Tx text={showcase.axisX} /></span>
+          <div class="chart-frame" data-chart="equity" data-value="run">
+            <img
+              src={`${base}results/equity-card.png`}
+              width="1568"
+              height="756"
+              alt="Equity. Manual, KMeans, and SOM stay at 1. Buy and hold is the dashed line."
+            />
           </div>
+          <p class="note"><Tx text={showcase.chartNote} /></p>
+        </figure>
+
+        <figure class="chart-slot">
+          <figcaption><Tx text={showcase.confusionTitle} /></figcaption>
+          <div class="chart-frame" data-chart="confusion" data-value="run">
+            <img
+              src={`${base}results/confusion.png`}
+              width="2063"
+              height="544"
+              alt="Confusion matrices for Manual, KMeans, and SOM. Predicted Above is 0."
+            />
+          </div>
+          <p class="note"><Tx text={showcase.confusionNote} /></p>
         </figure>
 
         <ul class="metric-grid">
@@ -57,8 +75,12 @@ const docsLink = L("文档", "Docs");
                     .map((column) => (
                       <div>
                         <dt>{column.label}</dt>
-                        <dd data-model={model.id} data-metric={column.key} data-value="empty">
-                          {showcase.emptyMark}
+                        <dd
+                          data-model={model.id}
+                          data-metric={column.key}
+                          data-value={model.values[column.key] === "—" ? "na" : "run"}
+                        >
+                          {model.values[column.key]}
                         </dd>
                       </div>
                     ))}
@@ -83,8 +105,12 @@ const docsLink = L("文档", "Docs");
                   <tr>
                     <th scope="row">{model.name}</th>
                     {showcase.columns.map((column) => (
-                      <td data-model={model.id} data-metric={column.key} data-value="empty">
-                        {showcase.emptyMark}
+                      <td
+                        data-model={model.id}
+                        data-metric={column.key}
+                        data-value={model.values[column.key] === "—" ? "na" : "run"}
+                      >
+                        {model.values[column.key]}
                       </td>
                     ))}
                   </tr>
@@ -93,6 +119,17 @@ const docsLink = L("文档", "Docs");
             </tbody>
           </table>
         </div>
+        <p><Tx text={showcase.runMeta} /></p>
+        <p>
+          <Tx text={showcase.filesLabel} />
+          <a href={`${base}results/run.json`}>run.json</a>
+          {" · "}
+          <a href={`${base}results/metrics.txt`}>metrics.txt</a>
+          {" · "}
+          <a href={`${base}results/oos_probabilities.csv`}>oos_probabilities.csv</a>
+          {" · "}
+          <a href={`${base}results/equity.png`}>equity.png</a>
+        </p>
         <p class="note">
           <Tx text={showcase.definitions} />
           {" "}

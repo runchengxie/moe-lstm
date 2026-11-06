@@ -1,0 +1,174 @@
+{
+  "as_of": "2026-11-06",
+  "timezone": "Asia/Shanghai",
+  "started_at": "2026-11-06T07:02:01Z",
+  "ended_at": "2026-11-06T07:02:27Z",
+  "wall_time_sec": 26,
+  "main_commit": "2254a462085429d16c484558b9778ea91ecbb52d",
+  "main_commit_short": "2254a46",
+  "executed_commit": "2de4f96e73f848bb24c54c33f510537e868931ba",
+  "executed_commit_short": "2de4f96",
+  "tree": "82083bec2840dbef19dcb81a7e807361c5bc8155",
+  "tree_note": "The process ran executed_commit. That tree is the tree of main_commit, the squash of pull request 20.",
+  "symbol": "^GSPC",
+  "source": "Yahoo Finance chart API v8, unadjusted daily open, high, low, and close.",
+  "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?period1=1420070400&period2=1795000000&interval=1d&events=history",
+  "session_timezone": "America/New_York",
+  "date_start": "2015-01-02",
+  "date_end": "2026-11-05",
+  "n_bars": 2979,
+  "test_label_start": "2024-06-28",
+  "test_label_end": "2026-11-04",
+  "n_test": 591,
+  "label_counts": {
+    "0": 1733,
+    "1": 1226
+  },
+  "test_label_counts": {
+    "0": 324,
+    "1": 267
+  },
+  "epochs": 50,
+  "patience": 5,
+  "batch_size": 16,
+  "fee": 0.0005,
+  "threshold": 0.002,
+  "lookback": 5,
+  "top_k": 1,
+  "aux_loss_weight": 0.01,
+  "prediction_threshold": 0.5,
+  "features": {
+    "kmeans": [
+      "RSI",
+      "EMA5",
+      "MACD",
+      "Volatility",
+      "Daily_Return"
+    ],
+    "som": [
+      "EMA5",
+      "MACD",
+      "Volatility"
+    ]
+  },
+  "command": "MOE_DATA_CSV=/tmp/moe-data/gspc.csv MOE_OOS_CSV=/tmp/moe-run/oos_probabilities.csv MOE_RESULTS_DIR=/tmp/moe-run MPLBACKEND=Agg TF_CPP_MIN_LOG_LEVEL=2 uv run moe-lstm",
+  "cwd": "repository root",
+  "price_file": "Not committed. The CSV was built from the Yahoo chart payload and kept outside the repository.",
+  "metrics": [
+    {
+      "Model": "Manual",
+      "Accuracy": 0.5482233502538071,
+      "Precision": 0.0,
+      "Recall": 0.0,
+      "F1": 0.0,
+      "AUC-ROC": 0.5284135571276645,
+      "Total Return": 0.0,
+      "Max Drawdown": 0.0,
+      "Sharpe Ratio": null
+    },
+    {
+      "Model": "KMeans",
+      "Accuracy": 0.5482233502538071,
+      "Precision": 0.0,
+      "Recall": 0.0,
+      "F1": 0.0,
+      "AUC-ROC": 0.5010172469598188,
+      "Total Return": 0.0,
+      "Max Drawdown": 0.0,
+      "Sharpe Ratio": null
+    },
+    {
+      "Model": "SOM",
+      "Accuracy": 0.5482233502538071,
+      "Precision": 0.0,
+      "Recall": 0.0,
+      "F1": 0.0,
+      "AUC-ROC": 0.5241480556711517,
+      "Total Return": 0.0,
+      "Max Drawdown": 0.0,
+      "Sharpe Ratio": null
+    }
+  ],
+  "buy_and_hold": {
+    "Model": "Buy & Hold",
+    "Total Return": 0.3467186047328894,
+    "Max Drawdown": -0.18902206184283954,
+    "Sharpe Ratio": 0.86571936033285,
+    "fee": 0.0
+  },
+  "probabilities": {
+    "KMeans": {
+      "min": 0.33177995681762695,
+      "max": 0.43167799711227417,
+      "mean": 0.37073723167534006,
+      "n_unique": 591,
+      "n_long": 0,
+      "n": 591
+    },
+    "Manual": {
+      "min": 0.34035152196884155,
+      "max": 0.4004230797290802,
+      "mean": 0.3646538374589381,
+      "n_unique": 591,
+      "n_long": 0,
+      "n": 591
+    },
+    "SOM": {
+      "min": 0.3237767517566681,
+      "max": 0.47347134351730347,
+      "mean": 0.3926314140737763,
+      "n_unique": 591,
+      "n_long": 0,
+      "n": 591
+    }
+  },
+  "rounded_3": {
+    "models": [
+      {
+        "Model": "Manual",
+        "Accuracy": 0.548,
+        "Precision": 0.0,
+        "Recall": 0.0,
+        "F1": 0.0,
+        "AUC-ROC": 0.528,
+        "Total Return": 0.0,
+        "Max Drawdown": 0.0,
+        "Sharpe Ratio": null
+      },
+      {
+        "Model": "KMeans",
+        "Accuracy": 0.548,
+        "Precision": 0.0,
+        "Recall": 0.0,
+        "F1": 0.0,
+        "AUC-ROC": 0.501,
+        "Total Return": 0.0,
+        "Max Drawdown": 0.0,
+        "Sharpe Ratio": null
+      },
+      {
+        "Model": "SOM",
+        "Accuracy": 0.548,
+        "Precision": 0.0,
+        "Recall": 0.0,
+        "F1": 0.0,
+        "AUC-ROC": 0.524,
+        "Total Return": 0.0,
+        "Max Drawdown": 0.0,
+        "Sharpe Ratio": null
+      }
+    ],
+    "buy_and_hold": {
+      "Total Return": 0.347,
+      "Max Drawdown": -0.189,
+      "Sharpe Ratio": 0.866
+    }
+  },
+  "notes": [
+    "Every test probability is below 0.5, so every prediction is 0 and the position stays flat.",
+    "Flat equity stays at 1, total return is 0, max drawdown is 0, and Sharpe is null because the strategy return is constant.",
+    "Buy and hold uses the same forward returns with fee 0. It is not a fourth trained model.",
+    "Manual, KMeans, and SOM equity curves are identical on this run.",
+    "equity-card.png redraws equity.csv in the site colors. equity.png is the figure the script saved."
+  ]
+}

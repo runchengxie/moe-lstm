@@ -104,10 +104,23 @@ if (!index.includes("/moe-lstm/docs/")) {
   process.exit(1);
 }
 const homeNeedles = [
-  "The page has no stored run.",
-  "这些格子是占位",
-  "data-value=\"empty\"",
+  "2026-11-06",
+  "^GSPC",
+  "2254a46",
+  "2de4f96",
+  "0.548",
+  "0.528",
+  "0.501",
+  "0.524",
+  "0.347",
+  "-0.189",
+  "0.866",
+  "NaN",
   "data-chart=\"equity\"",
+  "data-value=\"run\"",
+  "/moe-lstm/results/equity-card.png",
+  "/moe-lstm/results/confusion.png",
+  "/moe-lstm/results/run.json",
   "THRESHOLD = 0.002",
   "MOE_DATA_PARQUET",
 ];
@@ -116,10 +129,16 @@ if (missingHome.length > 0) {
   console.error("check-dist: home page is missing:\n" + missingHome.map((item) => `  - ${item}`).join("\n"));
   process.exit(1);
 }
-const emptyCells = [...index.matchAll(/data-value="empty"[^>]*>([^<]*)</g)].map((match) => match[1]);
-const filled = emptyCells.filter((text) => /\d/.test(text));
-if (emptyCells.length < 8 || filled.length > 0) {
-  console.error(`check-dist: expected empty metric cells, found ${emptyCells.length} cells, ${filled.length} with digits`);
+const staleHome = ["data-value=\"empty\"", "这些格子是占位", "The page has no stored run.", "格子空着"];
+const staleHit = staleHome.filter((needle) => index.includes(needle));
+if (staleHit.length > 0) {
+  console.error("check-dist: home page still has empty-cell copy:\n" + staleHit.map((item) => `  - ${item}`).join("\n"));
+  process.exit(1);
+}
+const runCells = [...index.matchAll(/data-value="run"[^>]*>([^<]*)</g)].map((match) => match[1].trim());
+const numbered = runCells.filter((text) => /\d/.test(text) || text === "NaN");
+if (numbered.length < 24) {
+  console.error(`check-dist: expected filled run cells, found ${numbered.length}`);
   process.exit(1);
 }
 if (!existsSync(join(dist, "changelog/index.html"))) {
