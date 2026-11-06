@@ -5,6 +5,7 @@ import { copy, links, ui, type Localized } from "../i18n/copy";
 
 interface Props {
   canonical?: boolean;
+  canonicalUrl?: string;
   title?: Localized;
   description?: Localized;
 }
@@ -18,7 +19,7 @@ const onDocs = path.startsWith(`${base}docs/`);
 
 <!doctype html>
 <html
-  lang="zh"
+  lang="en"
   data-theme="system"
   data-title-zh={title.zh}
   data-title-en={title.en}
@@ -28,11 +29,11 @@ const onDocs = path.startsWith(`${base}docs/`);
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={description.zh} />
+    <meta name="description" content={description.en} />
     <meta name="theme-color" content="#f3efe6" />
-    <title>{title.zh}</title>
+    <title>{title.en}</title>
     <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
-    {canonical ? <link rel="canonical" href={links.pages} /> : null}
+    {canonical ? <link rel="canonical" href={Astro.props.canonicalUrl || links.pages} /> : null}
     <script is:inline>
       (function () {
         var root = document.documentElement;
@@ -73,8 +74,8 @@ const onDocs = path.startsWith(`${base}docs/`);
         <div class="control">
           <span class="caption" id="lang-label"><Tx text={ui.langLabel} /></span>
           <div class="seg" role="group" aria-labelledby="lang-label">
-            <button type="button" data-set-lang="zh" aria-pressed="true"><Tx text={ui.langZh} /></button>
-            <button type="button" data-set-lang="en" aria-pressed="false"><Tx text={ui.langEn} /></button>
+            <button type="button" data-set-lang="zh" aria-pressed="false"><Tx text={ui.langZh} /></button>
+            <button type="button" data-set-lang="en" aria-pressed="true"><Tx text={ui.langEn} /></button>
           </div>
         </div>
         <div class="control">

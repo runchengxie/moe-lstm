@@ -27,6 +27,10 @@ if (!existsSync(indexPath)) {
 const index = readFileSync(indexPath, "utf8");
 
 const required = [
+  "https://runchengxie.github.io/global-market-research/research/lstm-moe/",
+  "Research has moved to Global Market Research",
+  "项目已迁入 Global Market Research",
+  "data-stop-redirect",
   "/moe-lstm/",
   "脚本在终端打印指标",
   "The script prints metrics in the terminal.",
@@ -189,3 +193,8 @@ if (unprefixed.length > 0) {
 }
 
 console.log(`check-dist: ok (${html.length} html files)`);
+
+const historical = readFileSync(join(dist, 'docs/data/index.html'), 'utf8');
+if (historical.includes('data-stop-redirect') || !existsSync(join(dist,'results/run.json'))) {
+ throw new Error('Historical links must remain available without automatic navigation');
+}

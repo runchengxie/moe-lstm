@@ -766,3 +766,14 @@ uv run moe-lstm`;
 export const csvCommand = `export MOE_DATA_CSV=/path/to/bars.csv
 export MPLBACKEND=Agg
 uv run moe-lstm`;
+
+
+export const migration = {
+  title: L("项目已迁入 Global Market Research", "Research has moved to Global Market Research"),
+  body: L("LSTM/MoE 后续开发、实验和交互图表在新项目维护。这里保留原始实现和历史 SPY 结果，不代表新研究的最新状态。", "LSTM/MoE development, experiments and interactive charts now live in the new project. This site preserves the original implementation and historical SPY results, rather than the latest research state."),
+  open: L("前往新研究页面", "Open the new research page"),
+  repo: L("查看新项目源码", "View the new project source"),
+  timer: L("首页将在 15 秒后跳转。历史文档和结果链接继续保留，也可以取消跳转查看下方旧内容。", "This home page opens the new research page after 15 seconds. Historical documentation and result links remain available; cancel to read the old content below."),
+  cancel: L("留在历史页面", "Stay on the historical page"),
+  stopped: L("已取消自动跳转，可随时使用上方链接前往新项目。", "Automatic navigation canceled. The links above remain available."),
+};

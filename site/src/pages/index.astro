@@ -1,15 +1,23 @@
 ---
 import Base from "../layouts/Base.astro";
 import Tx from "../components/Tx.astro";
-import { architecture, copy, L, links, showcase } from "../i18n/copy";
+import { architecture, copy, L, links, showcase, migration } from "../i18n/copy";
 
 const base = import.meta.env.BASE_URL;
 const trainLink = L("训练和回测", "Training and backtest");
 const docsLink = L("文档", "Docs");
 ---
 
-<Base canonical>
+<Base title={migration.title} description={migration.body} canonical canonicalUrl="https://runchengxie.github.io/global-market-research/research/lstm-moe/">
   <div class="wrap">
+    <section class="migration" aria-labelledby="migration-heading" data-migration>
+      <h1 id="migration-heading"><Tx text={migration.title} /></h1>
+      <p><Tx text={migration.body} /></p>
+      <p><a data-migration-link href="https://runchengxie.github.io/global-market-research/research/lstm-moe/"><Tx text={migration.open} /></a> · <a href="https://github.com/runchengxie/global-market-research"><Tx text={migration.repo} /></a></p>
+      <p><Tx text={migration.timer} /></p>
+      <button data-stop-redirect type="button"><Tx text={migration.cancel} /></button>
+      <p data-redirect-stopped hidden><Tx text={migration.stopped} /></p>
+    </section>
     <header class="hero">
       <p class="kicker"><Tx text={copy.hero.kicker} /></p>
       <h1><Tx text={copy.hero.title} /></h1>
@@ -214,4 +222,19 @@ const docsLink = L("文档", "Docs");
       </div>
     </section>
   </div>
+
+<script>
+ const destination=()=>`https://runchengxie.github.io/global-market-research/${document.documentElement.lang==='zh'?'zh-CN/':''}research/lstm-moe/`;
+ const link=document.querySelector('[data-migration-link]') as HTMLAnchorElement;
+ const update=()=>{if(link)link.href=destination();};
+ update();new MutationObserver(update).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+ const timer=window.setTimeout(()=>window.location.assign(destination()),15000);
+ document.querySelector('[data-stop-redirect]')?.addEventListener('click',()=>{
+  window.clearTimeout(timer);
+  (document.querySelector('[data-redirect-stopped]') as HTMLElement).hidden=false;
+  (document.querySelector('[data-stop-redirect]') as HTMLElement).hidden=true;
+ });
+</script>
+<style>.migration{margin:2rem 0;padding:1.5rem;border:2px solid var(--line);border-radius:.5rem}.migration h1{font-size:clamp(1.7rem,4vw,2.5rem)}.migration p{line-height:1.8}.migration button{font:inherit;padding:.6rem;cursor:pointer}.migration a{font-weight:600}</style>
+
 </Base>

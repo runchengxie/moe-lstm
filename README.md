@@ -1,5 +1,11 @@
 **English** | [简体中文](README.zh-CN.md)
 
+## Research moved
+
+LSTM/MoE development and experiments now live in [Global Market Research](https://github.com/runchengxie/global-market-research/tree/main/research/equity-lab). Open the [new research page](https://runchengxie.github.io/global-market-research/research/lstm-moe/) or [current protocol and commands](https://github.com/runchengxie/global-market-research/blob/main/docs/research/lstm-moe.md).
+
+This repository preserves the historical implementation, commits and results. The setup below describes that historical snapshot. The old Pages home provides the same migration notice and a cancellable redirect; documentation and result URLs remain available.
+
 **Project site:** [https://runchengxie.github.io/moe-lstm/](https://runchengxie.github.io/moe-lstm/) — home and docs.
 
 # MoE-LSTM

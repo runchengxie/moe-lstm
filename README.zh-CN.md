@@ -1,5 +1,11 @@
 [English](README.md) | 简体中文
 
+## 研究已迁移
+
+LSTM/MoE 后续开发和实验迁入 [Global Market Research](https://github.com/runchengxie/global-market-research/tree/main/research/equity-lab)。请访问[新研究页面](https://runchengxie.github.io/global-market-research/zh-CN/research/lstm-moe/)及[当前实验协议与命令](https://github.com/runchengxie/global-market-research/blob/main/docs/research/lstm-moe.zh-CN.md)。
+
+本仓库保留历史实现、提交与结果，下方安装说明对应旧版本。旧 Pages 首页提供迁移说明及可取消的跳转，历史文档和结果链接继续可读。
+
 项目站点在 [https://runchengxie.github.io/moe-lstm/](https://runchengxie.github.io/moe-lstm/)，上面有首页和文档。
 
 # MoE-LSTM
