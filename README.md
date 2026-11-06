@@ -40,4 +40,4 @@ One run trains three models: a hand-picked feature set, a K-Means subset, and a 
 - [Setup](docs/setup.md) — uv, why the packages are pinned, Python 3.12
 - [CI and the project site](docs/ci.md) — GitHub workflows, the smoke fixture, and GitHub Pages
 
-Those notes are also on the project site: [https://runchengxie.github.io/moe-lstm/](https://runchengxie.github.io/moe-lstm/). The Astro app in [`site/`](site/) serves the home page and these docs. On 2026-11-05 the project site returned HTTP 404 because no Pages deploy had run. Preview and publish steps are in [`site/README.md`](site/README.md).
+Those notes are also on the project site: [https://runchengxie.github.io/moe-lstm/](https://runchengxie.github.io/moe-lstm/). The Astro app in [`site/`](site/) serves the home page and these docs. The site is published. Preview and publish steps are in [`site/README.md`](site/README.md).

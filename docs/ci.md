@@ -42,7 +42,7 @@ That check builds a synthetic Hive tree and compares the daily OHLCV. It does no
 
 A bilingual brief lives in [`site/`](../site/). Chinese is the default, with an English switch. Color follows `prefers-color-scheme`, and the page can force light, dark, or system. [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) builds only that Astro app (Node.js 26.13.0 from `site/.nvmrc`) and deploys `site/dist` with `actions/upload-pages-artifact` and `actions/deploy-pages`. It does not install the Python dependencies.
 
-After the workflow has succeeded on `main`, the site is [https://runchengxie.github.io/moe-lstm/](https://runchengxie.github.io/moe-lstm/). On 2026-11-05 the project site returned HTTP 404 because no Pages deploy had run. The Pages API already reported Source as GitHub Actions (`build_type: workflow`).
+After the workflow has succeeded on `main`, the site is [https://runchengxie.github.io/moe-lstm/](https://runchengxie.github.io/moe-lstm/). The site is published. Source is GitHub Actions (`build_type: workflow`).
 
 ### Enable GitHub Pages
 

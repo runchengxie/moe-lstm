@@ -13,11 +13,11 @@
 | `1` | `+1` | `"1"` |
 | `0` | `0` | `"0"` |
 
-`sizing_request_for_signal` 造一份 `sizing_request.v1`。`session_request_for_order` 围着一笔已有的订单造一份 `engine_request.v2`。示例送出一个你选定的信号，LSTM 留着不训练。
+`sizing_request_for_signal` 造一份 `sizing_request.v1`。`session_request_for_order` 围着一笔已有的订单造一份 `engine_request.v2`。示例送出一个你选定的信号。这次不训练 LSTM。
 
 ```bash
 uv pip install /path/to/quant-backtest-engine/python
 uv run python examples/engine_backtest.py
 ```
 
-设了 `QUANT_ENGINE_BINARY` 和 `QUANT_ENGINE_SHA256` 之后，脚本调用 `size`。计划里有订单时再调用 `run_sessions`。打印出来的字段是引擎的 JSON。这份说明把那些数字留在引擎那边。项目站点记下了一次研究脚本自己的回测，不印这份引擎账本。
+设了 `QUANT_ENGINE_BINARY` 和 `QUANT_ENGINE_SHA256` 之后，脚本调用 `size`。计划里有订单时再调用 `run_sessions`。打印出来的字段是引擎的 JSON。这份说明把那些数字留在引擎那边。项目站点记下了一次研究脚本自己的回测。引擎账本留在引擎那边。

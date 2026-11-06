@@ -1,20 +1,20 @@
 # moe_lstm 项目简报
 
-`site/` 是一个很小的 Astro 静态站。首页是一次真实运行的回测和模型结构，文档在 `/moe-lstm/docs/`，合并记录在 `/moe-lstm/changelog/`。页面默认中文，可以切到英文；颜色跟随系统的 `prefers-color-scheme`，也可以改成浅色或深色。
+`site/` 是一个很小的 Astro 静态站。首页是 2026-11-06 的 SPY 日线运行，稀疏 top-1 是主表，稠密是对照，再加上模型结构。文档在 `/moe-lstm/docs/`。合并记录在 `/moe-lstm/changelog/`。页面默认中文，可以切到英文。颜色跟随系统的 `prefers-color-scheme`，也可以改成浅色或深色。
 
-站点地址：
+站点已经发布。
 
 https://runchengxie.github.io/moe-lstm/
 
-Pages 工作流已随 #7 合进 `main`（`37671ab`）。上面的地址就是这份简报。
+这份简报对应当前 main `3f02207`（#22 的 squash，2026-11-06）。Pages 工作流是 #7 放进 main 的，squash 是 `37671ab`。`src/moe_lstm/` 随 #17 进入 main。quant-backtest-engine 适配器随 #18 进入 main。稀疏 top-1 门控随 #20 进入 main。首页的 SPY 运行随 #22 进入 main。
 
-Python 脚本、`pyproject.toml` / `uv.lock` 和 smoke 流程仍在仓库根目录。这个工作流只构建 `site/`。构建时会读取仓库根目录的 `docs/`，把说明页放在 `/moe-lstm/docs/`，仍然是同一次 Pages 发布。
+Python 包在 `src/moe_lstm/`。`pyproject.toml`、`uv.lock` 和 smoke 流程在仓库根目录。这个工作流只构建 `site/`。构建时读取仓库根目录的 `docs/`，说明页在 `/moe-lstm/docs/`，同一次 Pages 发布。
 
 ## 本地预览
 
-CI 使用 npm，并提交了 `package-lock.json`。Node 版本钉在 [`.nvmrc`](.nvmrc) 的 **26.13.0**（2026-11-05 的 Active LTS，代号 Lithium）。本机用 Node 22 或更新的版本也可以安装。
+CI 使用 npm，并提交了 `package-lock.json`。Node 版本钉在 [`.nvmrc`](.nvmrc) 的 26.13.0（2026-11-05 的 Active LTS，代号 Lithium）。本机用 Node 22 或更新的版本也可以安装。
 
-`astro.config.mjs` 里的 `base` 是 `/moe-lstm`，所以本地首页在 `/moe-lstm/`，不在 `/`。
+`astro.config.mjs` 里的 `base` 是 `/moe-lstm`。本地首页在 `/moe-lstm/`。
 
 ### npm
 
@@ -34,7 +34,7 @@ npm run preview
 
 ### pnpm
 
-pnpm 只作为本地的另一种装法。CI 不读 `pnpm-lock.yaml`，请不要把那份锁文件提交进来。
+pnpm 只作为本地的另一种装法。CI 读取 `package-lock.json`。不要提交 `pnpm-lock.yaml`。
 
 ```bash
 cd site
@@ -42,7 +42,7 @@ pnpm install
 pnpm dev
 ```
 
-构建与预览：
+构建与预览。
 
 ```bash
 pnpm build
@@ -52,24 +52,24 @@ pnpm preview
 
 预览地址同样是 http://127.0.0.1:4321/moe-lstm/ 。
 
-## 打开 GitHub Pages
+## 站点怎么发布
 
 发布用的是官方的 `actions/upload-pages-artifact` 和 `actions/deploy-pages`，工作流在 [`.github/workflows/pages.yml`](../.github/workflows/pages.yml)。`deploy` 只在推到 `main` 时运行。pull request 上会构建站点并上传 artifact，不会部署。
 
-1. 打开仓库的 **Settings → Pages**。
-2. 在 **Build and deployment** 里，把 **Source** 设为 **GitHub Actions**。不要选 “Deploy from a branch”。
-3. 工作流已经在 `main` 上。之后的推送若改到 `site/`、`docs/`、这个工作流或根 `README.md`，就会跑 `pages`。也可以在 Actions 里手动跑 **pages**（`workflow_dispatch`）。
-4. 第一次部署若停在 `github-pages` 环境等待批准，由仓库管理员批准那一次。成功后站点在 https://runchengxie.github.io/moe-lstm/ 。
+站点已经在上面的地址。Source 是 GitHub Actions。下面的步骤是 Source 被改掉之后怎么改回来。
 
-工作流已经在 `main` 上（#7，`37671ab`）。撰写 #7 时 Source 已经是 GitHub Actions，因此第 2 步多半不用再点。若以后有人把 Source 改回某个分支，再按第 2 步改回来。
+1. 打开仓库的 Settings → Pages。
+2. 在 Build and deployment 里，把 Source 设为 GitHub Actions。不要选 Deploy from a branch。
+3. 工作流已经在 `main` 上。之后的推送若改到 `site/`、`docs/`、这个工作流或根 `README.md`，就会跑 `pages`。也可以在 Actions 里手动跑 pages（`workflow_dispatch`）。
+4. 若部署停在 `github-pages` 环境等待批准，由仓库管理员批准那一次。
 
 `site` 和 `base` 写死为这个仓库的项目 Pages 地址。仓库若改名或换主人，要一起改 `site/astro.config.mjs`。
 
 ## 内容从哪来
 
-文案在 `src/i18n/copy.ts`，中英文字段写在一起。首页写下 2026-11-06 的 SPY 日线运行，稀疏 top-1 是主表，稠密是对照。数字在 `public/results/run.json`。行情文件不进仓库。文档页读取仓库根目录 `docs/`。
+文案在 `src/i18n/copy.ts`，中英文字段写在一起。首页写下 2026-11-06 的 SPY 日线运行，稀疏 top-1 是主表，稠密是对照。数字在 `public/results/run.json`。行情文件不进仓库。
 
-文档页读取仓库根目录 `docs/` 里的中英 Markdown（环境、数据、训练、CI），不另起一套文案。
+文档页读取仓库根目录 `docs/` 里的中英 Markdown（环境、数据、训练、引擎、CI），不另起一套文案。
 
 ---
 
@@ -81,9 +81,9 @@ Live URL:
 
 https://runchengxie.github.io/moe-lstm/
 
-The Pages workflow is already on `main` with #7 (`37671ab`). That address is this brief.
+This brief matches main at `3f02207` (the squash of #22, 2026-11-06). The site is published at the URL above. The Pages workflow landed in #7 (`37671ab`). `src/moe_lstm/` landed in #17. The quant-backtest-engine adapter landed in #18. The sparse top-1 gate landed in #20. The home page run is the SPY window from #22.
 
-The Python script, `pyproject.toml` / `uv.lock`, and the smoke workflow stay at the repository root. This workflow builds `site/` only. The build reads the repository `docs/` folder and serves those pages at `/moe-lstm/docs/`, in the same Pages deploy.
+The Python package is `src/moe_lstm/`. `pyproject.toml`, `uv.lock`, and the smoke workflow stay at the repository root. This workflow builds `site/` only. The build reads the repository `docs/` folder and serves those pages at `/moe-lstm/docs/`, in the same Pages deploy.
 
 ## Local preview
 
@@ -126,12 +126,12 @@ The preview URL is the same: http://127.0.0.1:4321/moe-lstm/
 
 Deploy uses the official `actions/upload-pages-artifact` and `actions/deploy-pages` actions. The workflow is [`.github/workflows/pages.yml`](../.github/workflows/pages.yml). The `deploy` job runs only on a push to `main`. A pull request builds the site and uploads the artifact, and does not deploy.
 
+The site is already published at the URL above, and Source is GitHub Actions. The steps below put Source back if someone changes it.
+
 1. Open **Settings → Pages**.
 2. Under **Build and deployment**, set **Source** to **GitHub Actions**. Leave “Deploy from a branch” unselected.
 3. The workflow is already on `main`. A later push that changes `site/`, `docs/`, this workflow, or the root `README.md` runs `pages`. **workflow_dispatch** on the Actions tab runs it by hand.
-4. If the first deploy waits for approval on the `github-pages` environment, a repository admin approves that run. The site is then https://runchengxie.github.io/moe-lstm/ .
-
-The workflow is already on `main` (#7, `37671ab`). When #7 was written, Source was already GitHub Actions, so step 2 is likely already done. If Source is later switched back to a branch, set it to GitHub Actions again.
+4. If a deploy waits for approval on the `github-pages` environment, a repository admin approves that run. The published URL is https://runchengxie.github.io/moe-lstm/ .
 
 `site` and `base` are fixed to this repository’s project Pages URL. If the repository is renamed or moved, change both in `site/astro.config.mjs`.
 
@@ -139,4 +139,4 @@ The workflow is already on `main` (#7, `37671ab`). When #7 was written, Source w
 
 Copy is in `src/i18n/copy.ts`, with Chinese and English on the same fields. The home page records the 2026-11-06 SPY daily run. Sparse top-1 is the main table. Dense is the comparison. The numbers live in `public/results/run.json`. The price file stays out of the repository.
 
-The docs routes read the bilingual Markdown in the repository `docs/` folder (setup, data, training, CI). They do not keep a second copy of that text.
+The docs routes read the bilingual Markdown in the repository `docs/` folder (setup, data, training, engine, CI). They do not keep a second copy of that text.
