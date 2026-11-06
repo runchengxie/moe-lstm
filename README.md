@@ -4,7 +4,7 @@
 
 # MoE-LSTM
 
-This is a research script. It asks whether the next session’s close will be up or down, using a mixture-of-experts LSTM (MoE-LSTM). It was written for an index level, with the S&P 500 in mind. It prints metrics and a long/short backtest against buy and hold. It is not a trading system.
+This is a research script. It asks whether the next session’s close will be up or down, using a mixture-of-experts LSTM (MoE-LSTM). It was written for an index level, with the S&P 500 in mind. It prints metrics and a long-or-flat backtest against buy and hold. The test dates and sigmoid probabilities are written to `oos_probabilities.csv`. It is not a trading system.
 
 Hive Parquet minute bars are the input when you set them. Otherwise the script falls back to a daily CSV. This repo does not include market data. The default remote CSV URL returned HTTP 404 on 2026-11-05, so a CSV run needs a local path.
 
@@ -30,7 +30,7 @@ MOE_DATA_PARQUET=/path/to/dataset-root MOE_SYMBOL=AAPL MPLBACKEND=Agg uv run pyt
 
 ## What you get
 
-One run trains three models: a hand-picked feature set, a K-Means subset, and a self-organizing-map subset. Each one is an LSTM mixture of experts. The three experts read the same window. They differ by initialization and by the learned gate. The script prints class counts and does not resample. It then prints classification metrics and a long/short backtest next to buy and hold.
+One run trains three models: a hand-picked feature set, a K-Means subset, and a self-organizing-map subset. Each one is an LSTM mixture of experts. The three experts read the same window. They differ by initialization and by the learned gate. The script prints class counts and does not resample. It then prints classification metrics and a long-or-flat backtest next to buy and hold.
 
 ## More detail
 

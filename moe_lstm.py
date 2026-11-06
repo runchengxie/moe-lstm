@@ -2,16 +2,17 @@
 
 The script reads daily OHLC bars, builds technical features, selects subsets
 with K-Means and a self-organizing map, and trains one LSTM mixture on each
-subset. A prediction of 1 is long and 0 is short. The backtest earns the next
-close-to-close return. Feature selection seeds are fixed. LSTM training is not
+subset. A prediction of 1 is long and 0 is flat. Class 0 did not clear the
+threshold, so the backtest does not short it. The backtest earns the next
+close-to-close return while long. Feature selection seeds are fixed. LSTM training is not
 bitwise reproducible.
 
 `MOE_DATA_PARQUET` loads Hive minute bars and aggregates one row per session.
 When that variable is unset, `MOE_DATA_CSV` (or the default URL) is the source.
 
 中文说明与上面相同。脚本读取日频 OHLC，计算技术指标，用 K-Means 和自组织映射挑选
-特征子集，并分别训练 LSTM 混合专家。预测 1 做多，0 做空，回测赚取下一根 K 线的
-收盘到收盘收益。特征选择的随机种子是固定的，LSTM 训练结果不能逐位复现。
+特征子集，并分别训练 LSTM 混合专家。预测 1 做多，0 空仓。类别 0 含小涨，
+回测不做空。持有多头时赚取下一根 K 线的收盘到收盘收益。特征选择的随机种子是固定的，LSTM 训练结果不能逐位复现。
 设置 `MOE_DATA_PARQUET` 时读取 Hive 分钟线并聚合成日线；未设置时使用
 `MOE_DATA_CSV` 或默认 URL。
 类别计数只打印，不重采样。三个专家读同一段输入，差别来自初始化和门控权重。
@@ -405,6 +406,12 @@ def select_som_features(
 def make_windows(
     scaled: np.ndarray, labels: np.ndarray, lookback: int
 ) -> tuple[np.ndarray, np.ndarray]:
+    """Window ``i`` is feature rows ``i .. i+lookback-1``.
+
+    Its label is row ``i+lookback``, the first row after the window. That row's
+    forward return starts at its close and ends at the next close, so the
+    window does not contain the close where the label becomes known.
+    """
     n_windows = len(scaled) - lookback
     if n_windows < 1:
         raise ValueError("Not enough scaled rows to build a window.")
@@ -458,16 +465,62 @@ def classification_scores(y_true, y_score, y_pred) -> dict[str, float]:
     return scores
 
 
+def study_positions(predictions) -> np.ndarray:
+    """Map 1 to long (+1) and 0 to flat (0)."""
+    predicted = np.asarray(predictions)
+    if predicted.size == 0:
+        raise ValueError("Predictions are empty.")
+    if not np.isin(predicted, (0, 1)).all():
+        raise ValueError("Predictions must be 0 or 1.")
+    return np.where(predicted == 1, 1.0, 0.0)
+
+
+def oos_probability_frame(dates, model_name: str, probabilities, predictions) -> pd.DataFrame:
+    """Out-of-sample dates, probabilities, and hard labels for one model."""
+    probability = np.asarray(probabilities, dtype=float).reshape(-1)
+    predicted = np.asarray(predictions).reshape(-1)
+    date = pd.Series(dates).reset_index(drop=True)
+    if not (len(date) == len(probability) == len(predicted)):
+        raise ValueError(
+            "OOS dates, probabilities, and predictions must have the same length. "
+            f"Got {len(date)}, {len(probability)}, {len(predicted)}."
+        )
+    if len(date) == 0:
+        raise ValueError("OOS frame is empty.")
+    if not np.isfinite(probability).all():
+        raise ValueError("OOS probabilities must be finite.")
+    return pd.DataFrame(
+        {
+            "Date": date,
+            "Model": model_name,
+            "Probability": probability,
+            "Prediction": predicted.astype(int),
+        }
+    )
+
+
+def write_oos_probabilities(frames: list[pd.DataFrame], path: str) -> str:
+    """Write one CSV of out-of-sample probabilities. Returns ``path``."""
+    if not frames:
+        raise ValueError("No OOS frames to write.")
+    table = pd.concat(frames, ignore_index=True)
+    table.to_csv(path, index=False)
+    return path
+
+
 def backtest(predictions, df_test: pd.DataFrame, model_name: str, fee: float = BACKTEST_FEE) -> dict:
-    """Long/short backtest on the forward close-to-close return.
+    """Long-or-flat backtest on the forward close-to-close return.
 
     ``Tomorrow_Change`` is the return from this close to the next close, which
     is the return the label used. ``Daily_Return`` on the same row already
     happened by that close, so it is not the strategy return.
 
-    The account is flat before the first test bar. Turnover is the absolute
-    position change, so opening from flat costs ``fee`` and a long-to-short
-    flip costs ``2 * fee``. An unchanged position costs nothing.
+    Prediction 1 is long (+1). Prediction 0 is flat (0). The account starts at
+    1 before the first test bar. Opening or closing a long costs ``fee`` once.
+    Staying flat earns nothing and pays nothing.
+
+    Max drawdown uses a running peak of at least 1, so a loss from the starting
+    equity counts even when later equity is lower still.
     """
     predicted = np.asarray(predictions)
     if len(predicted) != len(df_test):
@@ -484,7 +537,7 @@ def backtest(predictions, df_test: pd.DataFrame, model_name: str, fee: float = B
     if not np.isfinite(forward).all():
         raise ValueError("Tomorrow_Change must be finite on every backtest row.")
 
-    position = np.where(predicted == 1, 1.0, -1.0)
+    position = study_positions(predicted)
     previous = np.empty_like(position)
     previous[0] = 0.0
     if len(position) > 1:
@@ -495,7 +548,8 @@ def backtest(predictions, df_test: pd.DataFrame, model_name: str, fee: float = B
     strategy_series = pd.Series(strategy, index=df_test.index)
     equity = (1 + strategy_series).cumprod()
     equity.name = f"{model_name}_Cumulative"
-    drawdown = (equity - equity.cummax()) / equity.cummax()
+    running_peak = equity.cummax().clip(lower=1.0)
+    drawdown = (equity - running_peak) / running_peak
     deviation = float(strategy_series.std(ddof=1))
     if deviation == 0.0 or not np.isfinite(deviation):
         sharpe_ratio = float("nan")
@@ -584,6 +638,7 @@ def train_and_predict_moe(
         "recall": scores["recall"],
         "f1": scores["f1"],
         "auc_roc": scores["auc_roc"],
+        "probabilities": y_score,
         "model": model,
     }
 
@@ -656,8 +711,8 @@ def _plot_results(results: list[dict], df_test: pd.DataFrame) -> None:
             annot=True,
             fmt="d",
             cmap="Blues",
-            xticklabels=["Down", "Up"],
-            yticklabels=["Down", "Up"],
+            xticklabels=["Not above", "Above"],
+            yticklabels=["Not above", "Above"],
         )
         plt.title(f"{result['Model']} Confusion Matrix")
         plt.xlabel("Predicted")
@@ -748,6 +803,7 @@ def main(epochs: int | None = None) -> pd.DataFrame:
                 "Model": model_name,
                 "y_test": model_result["y_test"],
                 "predictions": model_result["predictions"],
+                "probabilities": model_result["probabilities"],
                 "Accuracy": model_result["accuracy"],
                 "Precision": model_result["precision"],
                 "Recall": model_result["recall"],
@@ -759,6 +815,21 @@ def main(epochs: int | None = None) -> pd.DataFrame:
                 "Cumulative": backtest_result["Cumulative"],
             }
         )
+
+    oos_path = os.environ.get("MOE_OOS_CSV", "oos_probabilities.csv")
+    write_oos_probabilities(
+        [
+            oos_probability_frame(
+                df_test["Date"],
+                result["Model"],
+                result["probabilities"],
+                result["predictions"],
+            )
+            for result in results
+        ],
+        oos_path,
+    )
+    print(f"OOS probabilities written to {oos_path}")
 
     metrics = _metrics_table(results)
     print("\n===== 模型性能对比 =====")
