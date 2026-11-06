@@ -14,3 +14,9 @@ def study_positions(predictions) -> np.ndarray:
         raise ValueError("Predictions must be 0 or 1.")
     return np.where(predicted == 1, 1.0, 0.0)
 
+
+def long_only_target_weights(predictions) -> list[str]:
+    """Decimal weight strings. Long is ``1``. Flat is ``0``."""
+    positions = study_positions(predictions)
+    return ["1" if position > 0 else "0" for position in positions]
+

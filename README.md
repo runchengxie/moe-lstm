@@ -36,6 +36,7 @@ One run trains three models: a hand-picked feature set, a K-Means subset, and a 
 
 - [Data](docs/data.md) — Parquet layout, how minutes become daily bars, the CSV columns, and `MOE_DATA_PARQUET`, `MOE_SYMBOL`, `MOE_SECURITY`, `MOE_DATA_CSV`
 - [Training and backtest](docs/training.md) — window length, the split, features, the label threshold, fees, and the printed metrics
+- [Engine backtest](docs/engine.md) — long-or-flat weights, and fills plus the ledger through quant-backtest-engine
 - [Setup](docs/setup.md) — uv, why the packages are pinned, Python 3.12
 - [CI and the project site](docs/ci.md) — GitHub workflows, the smoke fixture, and GitHub Pages
 

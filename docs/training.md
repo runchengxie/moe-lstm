@@ -37,3 +37,5 @@ The default fee is `0.0005` return units per unit of position turnover. The acco
 Total return is final equity minus 1. Equity starts at 1 before the first bar. Max drawdown uses a running peak that is at least that 1, then later equity highs. Two consecutive `-10%` days from a long position, with no fee, finish at `0.81` and the max drawdown is `-19%`. A fee on a zero forward return is a drawdown from 1. Sharpe ratio is the mean strategy return divided by its sample standard deviation, times `sqrt(252)`. That scaling assumes one bar per trading session. If the median gap between dates is outside 1 to 3 days, the script prints a warning and still reports the same ratio. A constant strategy return has Sharpe `NaN`. If the test labels contain one class, AUC is `NaN` and the other classification scores use `zero_division=0`. The confusion-matrix axes read "Not above" and "Above".
 
 Reported columns are `Model`, `Accuracy`, `Precision`, `Recall`, `F1`, `AUC-ROC`, `Total Return`, `Max Drawdown`, and `Sharpe Ratio` for `Manual`, `KMeans`, and `SOM`.
+
+Fills and the ledger for quant-backtest-engine are a separate path. How to run it is in [Engine backtest](engine.md).

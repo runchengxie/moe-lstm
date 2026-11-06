@@ -318,14 +318,14 @@ export const copy = {
       },
     ],
     note: L(
-      "包已经在仓库里。回测引擎还没有接上。",
-      "The package is in the repository. The backtest engine is not wired up.",
+      "包和引擎适配器都在仓库里。这一页的回测格子空着。",
+      "The package and the engine adapter are in the repository. The backtest cells on this page are empty.",
     ),
   },
   next: {
     index: "05",
     heading: L("还没做", "Not done yet"),
-    intro: L("包已经拆好。回测引擎还没有接上。", "The package is split. The backtest engine is not wired up."),
+    intro: L("包打出信号。引擎记下成交和账本。这一页的格子空着。", "The package emits signals. The engine records fills and the ledger. The cells on this page are empty."),
     items: [
       {
         term: L("`src/moe_lstm/`", "`src/moe_lstm/`"),
@@ -337,8 +337,8 @@ export const copy = {
       {
         term: L("quant-backtest-engine", "quant-backtest-engine"),
         detail: L(
-          "模型只输出信号或权重。成交和账本由这个库负责。还没有接上。",
-          "The model would emit signals or weights. Fills and the ledger would belong to this library. Not wired up.",
+          "信号从 `moe_lstm.signals` 出去。成交和账本走 `size` 和 `run_sessions`。示例是 `examples/engine_backtest.py`。这一页不印它的输出。",
+          "Signals leave through `moe_lstm.signals`. Fills and the ledger go through `size` and `run_sessions`. The example is `examples/engine_backtest.py`. This page leaves that output off.",
         ),
         href: links.engine,
       },
