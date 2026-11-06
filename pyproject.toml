@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "moe-lstm"
 version = "0.1.0"
@@ -16,5 +20,11 @@ dependencies = [
     "pyarrow==26.0.1",
 ]
 
+[project.scripts]
+moe-lstm = "moe_lstm.cli:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/moe_lstm"]
+
 [tool.uv]
-package = false
+package = true

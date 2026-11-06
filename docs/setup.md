@@ -10,7 +10,7 @@ Checked on Python 3.12. Install [uv](https://docs.astral.sh/uv/) 0.13.7, then fr
 uv sync
 ```
 
-`uv sync` creates `.venv` and installs the locked dependencies. `pyproject.toml` pins the direct packages. `uv.lock` pins the full resolve. This repository is a script, not an installable package. `.python-version` requests Python 3.12, and uv installs that interpreter when it is missing.
+`uv sync` creates `.venv`, installs the locked dependencies, and installs this project. The import name is `moe_lstm` in `src/moe_lstm/`. The console command is `moe-lstm`. `python -m moe_lstm` runs the same study. `pyproject.toml` pins the direct packages. `uv.lock` pins the full resolve. `.python-version` requests Python 3.12, and uv installs that interpreter when it is missing.
 
 The direct pins are the set that installed cleanly on Python 3.12 on 2026-11-05, plus pyarrow 26.0.1 for the Hive loader:
 

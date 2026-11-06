@@ -1,5 +1,5 @@
+import inspect
 import os
-import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,11 +7,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
 import moe_lstm
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _price_frame(closes, dates=None, extra=None) -> pd.DataFrame:
@@ -103,7 +101,8 @@ class ContractTests(unittest.TestCase):
 
     def test_importing_the_module_does_not_train(self):
         self.assertTrue(callable(moe_lstm.main))
-        self.assertNotIn("model", moe_lstm.__dict__)
+        loaded = moe_lstm.__dict__.get("model")
+        self.assertTrue(loaded is None or inspect.ismodule(loaded))
 
     def test_moe_epochs_overrides_the_default_at_startup(self):
         previous = os.environ.get("MOE_EPOCHS")

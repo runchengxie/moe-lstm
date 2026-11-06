@@ -1,4 +1,4 @@
-"""Load the daily OHLCV frame `moe_lstm.py` already trains on.
+"""Load the daily OHLCV frame the study trains on.
 
 Primary source is a Hive tree of processed US-equity minute bars:
 
