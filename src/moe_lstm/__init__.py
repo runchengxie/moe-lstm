@@ -57,6 +57,7 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "classification_scores": ("moe_lstm.eval", "classification_scores"),
     "oos_probability_frame": ("moe_lstm.eval", "oos_probability_frame"),
     "write_oos_probabilities": ("moe_lstm.eval", "write_oos_probabilities"),
+    "long_only_target_weights": ("moe_lstm.signals", "long_only_target_weights"),
     "study_positions": ("moe_lstm.signals", "study_positions"),
     "main": ("moe_lstm.cli", "main"),
 }
