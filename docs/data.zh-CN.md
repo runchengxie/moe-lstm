@@ -46,7 +46,7 @@ export MOE_DATA_PARQUET=/path/to/dataset-root
 export MOE_SYMBOL=AAPL
 # export MOE_SECURITY=your-hash   # 同一 ticker 有多个 security 时才需要
 export MPLBACKEND=Agg
-uv run python moe_lstm.py
+uv run moe-lstm
 ```
 
 `MOE_DATA_PARQUET` 也可以直接指向 `parquet/` 目录。真实行情不放进本仓库。设置了 `MOE_DATA_PARQUET` 时，它优先于 `MOE_DATA_CSV`。
@@ -78,5 +78,5 @@ AlgoSeek 的美股 bar 不是这个表结构。请在单独的文件里把每个
 ```bash
 export MOE_DATA_CSV=/path/to/bars.csv
 export MPLBACKEND=Agg
-uv run python moe_lstm.py
+uv run moe-lstm
 ```

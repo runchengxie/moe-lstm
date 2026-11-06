@@ -18,19 +18,19 @@ Loading, labels, the split, and the backtest do not import TensorFlow. `tests/te
 
 ## Smoke
 
-[`.github/workflows/smoke.yml`](../.github/workflows/smoke.yml) runs on those same events. It installs the same lock, byte-compiles `moe_lstm.py`, and trains one epoch on `tests/fixtures/tiny_bars.csv`:
+[`.github/workflows/smoke.yml`](../.github/workflows/smoke.yml) runs on those same events. It installs the same lock, byte-compiles `src/moe_lstm`, and trains one epoch on `tests/fixtures/tiny_bars.csv`:
 
 ```bash
 uv sync --frozen
-uv run python -m py_compile moe_lstm.py
-MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MOE_EPOCHS=1 MPLBACKEND=Agg uv run python moe_lstm.py
+uv run python -m compileall -q src/moe_lstm
+MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MOE_EPOCHS=1 MPLBACKEND=Agg uv run moe-lstm
 ```
 
-`tests/fixtures/tiny_bars.csv` is a synthetic 120-row series in this column contract. It checks that the script can load, fit, and print metrics. It is not market data. The smoke workflow allows 30 minutes for the TensorFlow wheel. If a GitHub-hosted runner cannot install TensorFlow, run the three commands on a machine that can. `py_compile` does not import TensorFlow. A finished run can still print TensorFlow retracing warnings, because each feature set builds its own model. It does not print a non-interactive canvas warning. `MOE_EPOCHS` and the Agg backend are described in [Training and backtest](training.md).
+`tests/fixtures/tiny_bars.csv` is a synthetic 120-row series in this column contract. It checks that the package can load, fit, and print metrics. It is not market data. The smoke workflow allows 30 minutes for the TensorFlow wheel. If a GitHub-hosted runner cannot install TensorFlow, run the three commands on a machine that can. `compileall` does not import TensorFlow. A finished run can still print TensorFlow retracing warnings, because each feature set builds its own model. It does not print a non-interactive canvas warning. `MOE_EPOCHS` and the Agg backend are described in [Training and backtest](training.md). The smoke command is `uv run moe-lstm`, which is the console script. `uv run python -m moe_lstm` is the same entry.
 
 ## Parquet loader
 
-[`.github/workflows/parquet-loader.yml`](../.github/workflows/parquet-loader.yml) runs on pull requests and on pushes to `main`. It uses uv to install pandas and pyarrow only, then runs:
+[`.github/workflows/parquet-loader.yml`](../.github/workflows/parquet-loader.yml) runs on pull requests and on pushes to `main`. It uses uv to install pandas and pyarrow only, sets `PYTHONPATH=src` so it can import `moe_lstm.prices` without TensorFlow, then runs:
 
 ```bash
 uv run python -m unittest tests.test_hive_daily_bars

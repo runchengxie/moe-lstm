@@ -19,13 +19,13 @@ uv sync
 `uv sync` creates `.venv` and installs the locked dependencies. The fixture below is a small synthetic CSV in this repo, not market data:
 
 ```bash
-MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MPLBACKEND=Agg uv run python moe_lstm.py
+MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MPLBACKEND=Agg uv run moe-lstm
 ```
 
 Parquet is supported with environment variables. When `MOE_DATA_PARQUET` is set, that Hive root is the data source and it wins over `MOE_DATA_CSV`:
 
 ```bash
-MOE_DATA_PARQUET=/path/to/dataset-root MOE_SYMBOL=AAPL MPLBACKEND=Agg uv run python moe_lstm.py
+MOE_DATA_PARQUET=/path/to/dataset-root MOE_SYMBOL=AAPL MPLBACKEND=Agg uv run moe-lstm
 ```
 
 ## What you get

@@ -44,7 +44,7 @@ export MOE_DATA_PARQUET=/path/to/dataset-root
 export MOE_SYMBOL=AAPL
 # export MOE_SECURITY=your-hash   # only when several securities share the ticker
 export MPLBACKEND=Agg
-uv run python moe_lstm.py
+uv run moe-lstm
 ```
 
 The loader also accepts `MOE_DATA_PARQUET` pointed at the `parquet/` directory itself. Real market files stay outside this repo. When `MOE_DATA_PARQUET` is set it wins over `MOE_DATA_CSV`.
@@ -76,5 +76,5 @@ AlgoSeek US equity bars are not this schema. Map one row per session onto these 
 ```bash
 export MOE_DATA_CSV=/path/to/bars.csv
 export MPLBACKEND=Agg
-uv run python moe_lstm.py
+uv run moe-lstm
 ```

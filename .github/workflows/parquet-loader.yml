@@ -28,7 +28,9 @@ jobs:
           uv pip install "pandas==3.1.1" "pyarrow==26.0.1"
 
       - name: Byte-compile
-        run: uv run --no-sync python -m py_compile price_data.py moe_lstm.py
+        run: uv run --no-sync python -m compileall -q src/moe_lstm
 
       - name: Aggregate synthetic Hive bars
+        env:
+          PYTHONPATH: src
         run: uv run --no-sync python -m unittest tests.test_hive_daily_bars -v

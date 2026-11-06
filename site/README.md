@@ -67,7 +67,7 @@ pnpm preview
 
 ## 内容从哪来
 
-文案在 `src/i18n/copy.ts`，中英文字段写在一起。页面描述脚本、已经在 `main` 上的改动，以及还没做的两件事（`src/moe_lstm/` 和 quant-backtest-engine）。不记录任何一次回测数字，也不放行情。
+文案在 `src/i18n/copy.ts`，中英文字段写在一起。页面描述脚本、已经在 `main` 上的改动，以及 `src/moe_lstm/` 这个包。quant-backtest-engine 还没有接上。不记录任何一次回测数字，也不放行情。
 
 文档页读取仓库根目录 `docs/` 里的中英 Markdown（环境、数据、训练、CI），不另起一套文案。
 
@@ -137,6 +137,6 @@ The workflow is already on `main` (#7, `37671ab`). When #7 was written, Source w
 
 ## Where the words live
 
-Copy is in `src/i18n/copy.ts`, with Chinese and English on the same fields. The page describes the script, what is already on `main`, and the two items that are not done yet (`src/moe_lstm/` and quant-backtest-engine). It records no backtest figures and hosts no market data.
+Copy is in `src/i18n/copy.ts`, with Chinese and English on the same fields. The page describes the script, what is already on `main`, and the `src/moe_lstm/` package. quant-backtest-engine is not wired up. It records no backtest figures and hosts no market data.
 
 The docs routes read the bilingual Markdown in the repository `docs/` folder (setup, data, training, CI). They do not keep a second copy of that text.

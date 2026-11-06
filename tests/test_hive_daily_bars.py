@@ -6,17 +6,14 @@ rules can be checked without a vendor sample.
 
 from __future__ import annotations
 
-import sys
 import tempfile
 import unittest
 from decimal import Decimal
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
 import pandas as pd
 
-from price_data import (
+from moe_lstm.prices import (
     aggregate_regular_minutes,
     finalize_price_dates,
     load_price_frame,

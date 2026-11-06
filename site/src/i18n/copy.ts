@@ -318,20 +318,23 @@ export const copy = {
       },
     ],
     note: L(
-      "还没做的只有下一节的两件事。",
-      "The only work still planned is the two items in the next section.",
+      "包已经在仓库里。还没接上的是下一节的 quant-backtest-engine。",
+      "The package is in the repository. quant-backtest-engine is still not wired up.",
     ),
   },
   next: {
     index: "05",
     heading: L("还没做", "Not done yet"),
-    intro: L("这两件不在 main 上。", "These two are not on main."),
+    intro: L(
+      "包已经拆好。回测引擎还没有接上。",
+      "The package is split. The backtest engine is not wired up.",
+    ),
     items: [
       {
         term: L("`src/moe_lstm/`", "`src/moe_lstm/`"),
         detail: L(
-          "把根目录脚本拆成这个包。还没有做。",
-          "Split the root script into this package. Not done.",
+          "根目录脚本已经拆成这个包。运行是 `uv run moe-lstm`，导入名仍是 `moe_lstm`。",
+          "The root script is this package. Run it with `uv run moe-lstm`. The import name is still `moe_lstm`.",
         ),
       },
       {
@@ -446,8 +449,8 @@ export const parquetCommand = `uv sync
 export MOE_DATA_PARQUET=/path/to/dataset-root
 export MOE_SYMBOL=AAPL
 export MPLBACKEND=Agg
-uv run python moe_lstm.py`;
+uv run moe-lstm`;
 
 export const csvCommand = `export MOE_DATA_CSV=/path/to/bars.csv
 export MPLBACKEND=Agg
-uv run python moe_lstm.py`;
+uv run moe-lstm`;

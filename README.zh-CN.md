@@ -21,13 +21,13 @@ uv sync
 `uv sync` 会创建 `.venv` 并安装锁定的依赖。下面的样本是仓库里的一小份合成 CSV，不是行情：
 
 ```bash
-MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MPLBACKEND=Agg uv run python moe_lstm.py
+MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MPLBACKEND=Agg uv run moe-lstm
 ```
 
 Parquet 用环境变量打开。设置了 `MOE_DATA_PARQUET` 时，那个 Hive 根目录就是数据来源，并且优先于 `MOE_DATA_CSV`：
 
 ```bash
-MOE_DATA_PARQUET=/path/to/dataset-root MOE_SYMBOL=AAPL MPLBACKEND=Agg uv run python moe_lstm.py
+MOE_DATA_PARQUET=/path/to/dataset-root MOE_SYMBOL=AAPL MPLBACKEND=Agg uv run moe-lstm
 ```
 
 ## 你会看到什么
