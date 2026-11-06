@@ -1,4 +1,4 @@
-**English** | [简体中文](training.zh-CN.md)
+English | [简体中文](training.zh-CN.md)
 
 # Training and backtest
 
@@ -24,7 +24,7 @@ Manual features, in order:
 
 RSI is a 14-session simple average. A window with no gain and no loss is 50. A window with no losses is 100. Bollinger bands use the 20-session mean and a 2-standard-deviation band (pandas sample standard deviation). MACD is the 12/26 EMA difference and a 9-session signal. K-Means and SOM subsets depend on the fit slice.
 
-A test prediction is attached to the row whose label it predicts. Prediction `1` is long (`+1`) and `0` is flat (`0`), using a sigmoid threshold of `0.5`. Class `0` means the forward return did not clear the threshold. That includes small gains, so it is not a short. The position earns that row's `Tomorrow_Change` only while long. It does not earn `Daily_Return` on that row.
+A test prediction sits on the row whose label it predicts. Prediction `1` is long (`+1`). Prediction `0` is flat (`0`). The cutoff on the sigmoid is `0.5`. Class `0` is every forward return that did not clear the threshold, small gains included. The position stays flat. While the position is long, it earns that row's `Tomorrow_Change`. `Daily_Return` on the same row is already finished at that close.
 
 The label on session `t` is `1` when the close-to-close return from `t` to `t+1` is above `0.2%` (`THRESHOLD = 0.002`). A return equal to `0.2%` is `0`.
 
@@ -32,7 +32,7 @@ With `LOOKBACK = 5`, window `i` holds feature rows `i` through `i+4`. The label 
 
 The default fee is `0.0005` return units per unit of position turnover. The account is flat before the first test bar, so opening a long costs `0.0005`. Leaving a long for flat costs `0.0005` once. Staying flat earns nothing and pays nothing. Buy and hold is the uncosted cumulative product of the same forward returns.
 
-Total return is final equity minus 1. Equity starts at 1 before the first bar. Max drawdown uses a running peak that is at least that 1, then the later equity highs. Two consecutive `-10%` days from a long position, with no fee, finish at `0.81` and have max drawdown `-19%`, not `-10%`. A fee charged on a zero forward return is a drawdown from 1. Sharpe ratio is the mean strategy return divided by its sample standard deviation, times `sqrt(252)`. That scaling assumes one bar per trading session. If the median gap between dates is outside 1 to 3 days, the script prints a warning and still reports the same ratio. A constant strategy return has Sharpe `NaN`. If the test labels contain one class, AUC is `NaN` and the other classification scores use `zero_division=0`. The confusion-matrix axes say "Not above" and "Above", matching the label rather than a down/up trade.
+Total return is final equity minus 1. Equity starts at 1 before the first bar. Max drawdown uses a running peak that is at least that 1, then the later equity highs. Two consecutive `-10%` days from a long position, with no fee, finish at `0.81` and the max drawdown is `-19%`. A fee charged on a zero forward return is a drawdown from 1. Sharpe ratio is the mean strategy return divided by its sample standard deviation, times `sqrt(252)`. That scaling assumes one bar per trading session. If the median gap between dates is outside 1 to 3 days, the script prints a warning and still reports the same ratio. A constant strategy return has Sharpe `NaN`. If the test labels contain one class, AUC is `NaN` and the other classification scores use `zero_division=0`. The confusion-matrix axes read "Not above" and "Above", the same words as the label.
 
 Reported columns are `Model`, `Accuracy`, `Precision`, `Recall`, `F1`, `AUC-ROC`, `Total Return`, `Max Drawdown`, and `Sharpe Ratio` for `Manual`, `KMeans`, and `SOM`.
 

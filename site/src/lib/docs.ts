@@ -45,7 +45,7 @@ marked.use({
 
 function stripLangSwitch(markdown: string): string {
   return markdown.replace(
-    /^(?:\*\*English\*\* \| \[简体中文\]\([^)]+\)|\[English\]\([^)]+\) \| \*\*简体中文\*\*)\r?\n+/,
+    /^(?:\*\*English\*\* \| \[简体中文\]\([^)]+\)|\[English\]\([^)]+\) \| \*\*简体中文\*\*|English \| \[简体中文\]\([^)]+\)|\[English\]\([^)]+\) \| 简体中文)\r?\n+/,
     "",
   );
 }
@@ -120,7 +120,7 @@ function firstProse(markdown: string): string {
   for (const block of markdown.split(/\n{2,}/)) {
     const text = block.trim();
     if (!text || text.startsWith("#")) continue;
-    if (text === "本文与英文文档描述同一套行为，事实以英文和代码为准。") continue;
+    if (text === "代码和这两份说明写的是同一件事。") continue;
     if (/^(?:\[[^\]]+\]\([^)]+\)|\s|·)+$/.test(text)) continue;
     return plainParagraph(text);
   }
@@ -138,8 +138,8 @@ export type RenderedDoc = {
 export const docsIndexCopy = {
   title: L("文档", "Docs"),
   lede: L(
-    "这些页面在构建时读取仓库根目录的 docs/，和根 README 指向的是同一批说明。仍由现有的 Pages 工作流发布。",
-    "These pages are read from the repository docs/ folder at build time, the same notes the root README links to. The existing Pages workflow publishes them.",
+    "构建时，这些页面读取仓库根目录的 docs/。根 README 指的是同一批说明。Pages 工作流发布它们。",
+    "At build time these pages read docs/ at the repository root. The root README points at the same notes. The Pages workflow publishes them.",
   ),
   sourceLabel: L("仓库里的原文", "Source in the repository"),
 };

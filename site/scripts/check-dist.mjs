@@ -28,10 +28,8 @@ const index = readFileSync(indexPath, "utf8");
 
 const required = [
   "/moe-lstm/",
-  "不是交易系统",
-  "not a trading system",
-  "No market data",
-  "没有行情数据",
+  "行情文件留在仓库外面",
+  "Price files stay outside the repository.",
   "MOE_DATA_CSV",
   "MOE_DATA_PARQUET",
   "MOE_SYMBOL",
@@ -104,7 +102,7 @@ if (!index.includes("/moe-lstm/docs/")) {
   process.exit(1);
 }
 const homeNeedles = [
-  "This page stores no engine run.",
+  "The page has no stored run.",
   "这些格子是占位",
   "data-value=\"empty\"",
   "data-chart=\"equity\"",

@@ -1,16 +1,14 @@
-[English](data.md) | **简体中文**
+[English](data.md) | 简体中文
 
 # 数据
 
-本文与英文文档描述同一套行为，事实以英文和代码为准。
-
 [项目说明](../README.zh-CN.md) · [训练和回测](training.zh-CN.md) · [环境](setup.zh-CN.md) · [CI 和项目站点](ci.zh-CN.md)
 
-主输入是 Hive 分钟线。未设置 Parquet 根目录时，回退到日频 CSV。真实行情不放进本仓库。
+主输入是 Hive 分钟线。Parquet 根目录空着时，脚本读日频 CSV。行情文件留在仓库外面。
 
 ## 环境变量
 
-没有命令行参数。
+脚本不读命令行参数。
 
 | 变量 | 作用 |
 | --- | --- |
@@ -19,7 +17,7 @@
 | `MOE_SECURITY` | 同一个 ticker 有多个 `security=` 哈希时再设置。只有一个哈希时会自动选中。 |
 | `MOE_DATA_CSV` | 本地路径，或 `pandas.read_csv` 能打开的 URL。只在未设置 `MOE_DATA_PARQUET` 时使用。这个也未设置时，脚本读取 `DEFAULT_DATA_URL`。 |
 
-默认地址是 `runchengxie/quant_practice_3` 的 `historical_data.csv`。2026-11-05 访问该地址返回 HTTP 404，所以用 CSV 时要指向本地文件。
+默认地址是 `runchengxie/quant_practice_3` 的 `historical_data.csv`。2026-11-05 访问返回 HTTP 404。用 CSV 时指向本地文件。
 
 ## Parquet 分钟线
 
@@ -39,7 +37,7 @@ parquet/symbol=SYMBOL/security=HASH/year=YYYY/data.parquet
 | 当天最后一笔 `LastTradePrice` | `Close/Last` |
 | `Volume` 之和 | `Volume` |
 
-文件里的 `Date` 是 `YYYYMMDD`。聚合后是 datetime。`Volume` 留在表上，不作为模型特征。指标、标签和回测与解析后的 CSV 走同一段代码。
+文件里的 `Date` 写成 `YYYYMMDD`。聚合之后变成 datetime。`Volume` 留在表上。模型不用这一列当特征。指标、标签、回测和解析后的 CSV 走同一段代码。
 
 ```bash
 export MOE_DATA_PARQUET=/path/to/dataset-root
@@ -49,17 +47,17 @@ export MPLBACKEND=Agg
 uv run moe-lstm
 ```
 
-`MOE_DATA_PARQUET` 也可以直接指向 `parquet/` 目录。真实行情不放进本仓库。设置了 `MOE_DATA_PARQUET` 时，它优先于 `MOE_DATA_CSV`。
+`MOE_DATA_PARQUET` 也可以直接指向 `parquet/` 目录。行情文件留在仓库外面。设了 `MOE_DATA_PARQUET` 之后，它盖过 `MOE_DATA_CSV`。
 
 ```bash
 uv run python -m unittest tests.test_hive_daily_bars
 ```
 
-这个检查会建一棵合成的 Hive 目录并比较日线 OHLCV，不需要 TensorFlow。`.github/workflows/parquet-loader.yml` 在 pull request 上，以及向 `main` 的 push 上运行它，并用 uv 只安装 pandas 和 pyarrow。这条工作流也列在 [CI 和项目站点](ci.zh-CN.md)。下面的 CSV 约定只用于 `MOE_DATA_CSV`。
+这个检查建一棵合成 Hive 目录，再比日线 OHLCV。它用 pandas 和 pyarrow。[`.github/workflows/parquet-loader.yml`](../.github/workflows/parquet-loader.yml) 在 pull request 上跑，也在推到 `main` 时跑，并用 uv 只装这两个包。工作流也列在 [CI 和项目站点](ci.zh-CN.md)。下面的 CSV 约定只给 `MOE_DATA_CSV`。
 
 ## CSV 约定
 
-必填列如下。其余列只出现在开头的预览里，不作为特征。额外列中的空值不会删除行情行。
+必填列写在表里。其余列只出现在开头的预览，不算特征。额外列里的空值留着，行情行还在。
 
 | 列 | 规则 |
 | --- | --- |
@@ -69,11 +67,11 @@ uv run python -m unittest tests.test_hive_daily_bars
 | `High` | 有限数值。作为特征。 |
 | `Low` | 有限数值。作为特征。 |
 
-价格必须已经是数字。带 `$` 或千分位分隔符会被拒绝。随后脚本丢掉 20 日滚动指标填不满的前导行，并丢掉最后一行，因为下一根收盘未知。文件至少要有 28 根 K 线，拟合、验证和测试窗口才能同时非空。
+价格得已经是数字。带 `$` 或千分位的文本会被拒绝。脚本再丢掉 20 日滚动指标填不满的前导行，并丢掉最后一行，下一根收盘还不知道。文件至少要有 28 根 K 线，拟合、验证、测试窗口才能同时有行。
 
-交易日 `t` 的标签：从 `t` 到 `t+1` 的收盘收益率高于 `0.2%`（`THRESHOLD = 0.002`）时为 `1`，否则为 `0`。恰好等于 `0.2%` 时为 `0`。切分和回测里怎么用这个标签，写在 [训练和回测](training.zh-CN.md)。
+交易日 `t` 的标签，从 `t` 到 `t+1` 的收盘收益高于 0.2%（`THRESHOLD = 0.002`）时记 1。等于 0.2% 时记 0。更低的收益也记 0。切分和回测怎么用这个标签，写在 [训练和回测](training.zh-CN.md)。
 
-AlgoSeek 的美股 bar 不是这个表结构。请在单独的文件里把每个交易日映射成这些列名，并把日期写成 `%m/%d/%Y`（交易日写成 `Date`，开、高、低、收写成 `Open`、`High`、`Low`、`Close/Last`）。本脚本不会重命名供应商列名。
+AlgoSeek 美股 bar 用另一套列名。在单独的文件里，把每个交易日写成这五列，日期用 `%m/%d/%Y`。交易日写成 `Date`，开、高、低、收写成 `Open`、`High`、`Low`、`Close/Last`。脚本留下供应商原来的列名。
 
 ```bash
 export MOE_DATA_CSV=/path/to/bars.csv

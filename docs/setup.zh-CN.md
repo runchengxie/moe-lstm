@@ -1,20 +1,18 @@
-[English](setup.md) | **简体中文**
+[English](setup.md) | 简体中文
 
 # 环境
 
-本文与英文文档描述同一套行为，事实以英文和代码为准。
-
 [项目说明](../README.zh-CN.md) · [数据](data.zh-CN.md) · [训练和回测](training.zh-CN.md) · [CI 和项目站点](ci.zh-CN.md)
 
-在 Python 3.12 上核对过。先安装 [uv](https://docs.astral.sh/uv/) 0.13.7，然后在本目录执行：
+核对用的是 Python 3.12。先安装 [uv](https://docs.astral.sh/uv/) 0.13.7，再在这个目录执行下面的命令。
 
 ```bash
 uv sync
 ```
 
-`uv sync` 会创建 `.venv`，安装锁定的依赖，并安装本项目。导入包名是 `moe_lstm`（`src/moe_lstm/`）。控制台脚本是 `moe-lstm`，`python -m moe_lstm` 跑的是同一次研究。`pyproject.toml` 锁定直接依赖。`uv.lock` 锁定完整解析结果。`.python-version` 指定 Python 3.12，本机没有该版本时 uv 会安装它。
+`uv sync` 创建 `.venv`，装上锁住的依赖，再装上这个项目。导入名是 `moe_lstm`，目录是 `src/moe_lstm/`。控制台命令是 `moe-lstm`。`python -m moe_lstm` 跑同一次研究。`pyproject.toml` 钉住直接依赖。`uv.lock` 钉住整次解析。`.python-version` 写的是 Python 3.12。机器上没有这个解释器时，uv 会装上。
 
-直接依赖是 2026-11-05 在 Python 3.12 上能干净安装的那一组，再加上 Hive 加载用的 pyarrow 26.0.1：
+这组直接依赖在 2026-11-05 的 Python 3.12 上装通过了。Hive 加载另外钉了 pyarrow 26.0.1。
 
 | 包 | 版本 |
 | --- | --- |
@@ -28,9 +26,9 @@ uv sync
 | seaborn | 0.13.2 |
 | pyarrow | 26.0.1 |
 
-Keras 单独锁定，是因为 TensorFlow 2.21.0 只要求 `keras>=3.12`。精确版本避免以后一次全新安装选到 pandas 4 或更新的 numpy。K-Means 显式使用 `n_init=10`，因为 scikit-learn 1.4 把默认值改成了 `auto`。
+Keras 单独钉住。TensorFlow 2.21.0 只要求 `keras>=3.12`。版本钉死之后，一次新安装会停在这组数字上，pandas 停在 3.1.1，numpy 停在 2.5.4。K-Means 把 `n_init` 设成 10。scikit-learn 1.4 把默认值改成了 `auto`。
 
-这些版本在 GitHub Actions 里怎么跑，写在 [CI 和项目站点](ci.zh-CN.md)。训练之后脚本打印什么，写在 [训练和回测](training.zh-CN.md)。
+GitHub Actions 怎么跑这些版本，写在 [CI 和项目站点](ci.zh-CN.md)。训练打出什么，写在 [训练和回测](training.zh-CN.md)。
 
 ## 测试
 
@@ -38,9 +36,9 @@ Keras 单独锁定，是因为 TensorFlow 2.21.0 只要求 `keras>=3.12`。精�
 uv run python -m unittest discover -s tests -t . -v
 ```
 
-加载、标签、切分和回测不会导入 TensorFlow。安装了 TensorFlow 时，`tests/test_model.py` 会构建混合专家并执行 `main(epochs=1)`。未安装时这些测试跳过。
+加载、标签、切分、回测这几项测试用 pandas 和 sklearn。机器上有 TensorFlow 时，`tests/test_model.py` 会建混合专家，并跑 `main(epochs=1)`。没有 TensorFlow 时，这几项跳过。
 
-Hive 聚合检查不需要 TensorFlow：
+Hive 聚合那项检查用 pandas 和 pyarrow。
 
 ```bash
 uv run python -m unittest tests.test_hive_daily_bars

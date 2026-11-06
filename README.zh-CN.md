@@ -1,14 +1,12 @@
-[English](README.md) | **简体中文**
+[English](README.md) | 简体中文
 
-**项目站点：** [https://runchengxie.github.io/moe-lstm/](https://runchengxie.github.io/moe-lstm/) — 首页和文档。
+项目站点在 [https://runchengxie.github.io/moe-lstm/](https://runchengxie.github.io/moe-lstm/)，首页和文档都在上面。
 
 # MoE-LSTM
 
-本文与英文文档描述同一套行为，事实以英文和代码为准。
+脚本判断下一根收盘到收盘的收益有没有超过阈值。模型是混合专家 LSTM，按指数点位写，最初对着标普 500。它打印分类指标，再打印做多或空仓的回测，旁边是买入持有。数字打在终端里。
 
-这是一份研究脚本，用来判断下一根收盘到收盘的收益有没有超过阈值，模型是混合专家 LSTM（MoE-LSTM）。脚本按指数点位编写，最初针对标普 500。它会打印分类指标，以及做多或空仓的回测和买入持有的对比。它不是交易系统。
-
-设置了 Hive Parquet 分钟线时，那就是主输入。否则回退到日频 CSV。仓库里没有行情。脚本自带的远程 CSV 地址在 2026-11-05 返回 HTTP 404，所以用 CSV 时必须给出本地路径。
+Hive 分钟 Parquet 是主输入，设上 `MOE_DATA_PARQUET` 之后就走这条。根目录空着时，脚本读日频 CSV。行情文件留在仓库外面。脚本自带的远程 CSV 在 2026-11-05 返回 HTTP 404。用 CSV 时指向本地文件。
 
 ## 快速开始
 
@@ -18,7 +16,7 @@
 uv sync
 ```
 
-`uv sync` 会创建 `.venv` 并安装锁定的依赖。下面的样本是仓库里的一小份合成 CSV，不是行情：
+`uv sync` 创建 `.venv`，装上锁住的依赖。下面的样本是仓库里的一小份合成 CSV。行情文件留在仓库外面。
 
 ```bash
 MOE_DATA_CSV=tests/fixtures/tiny_bars.csv MPLBACKEND=Agg uv run moe-lstm
@@ -32,14 +30,14 @@ MOE_DATA_PARQUET=/path/to/dataset-root MOE_SYMBOL=AAPL MPLBACKEND=Agg uv run moe
 
 ## 你会看到什么
 
-一次运行训练三个模型：手工特征、K-Means 子集、自组织映射子集。每个模型都是 LSTM 混合专家。三个专家读取同一段窗口，差别来自初始化和学到的门控。脚本只打印类别数量，不做重采样。然后打印分类指标，以及做多或空仓的回测和买入持有的对比。
+一次运行训练三个模型，手工特征、K-Means 子集、自组织映射子集。每个模型都是 LSTM 混合专家。三个专家读同一段窗口。差别来自初始化和学到的门控。脚本打印类别数量，类别保持原样。然后打印分类指标，再打印做多或空仓的回测，旁边是买入持有。
 
 ## 更多说明
 
-- [数据](docs/data.zh-CN.md) — Parquet 目录、分钟线如何收成日线、CSV 列，以及 `MOE_DATA_PARQUET`、`MOE_SYMBOL`、`MOE_SECURITY`、`MOE_DATA_CSV`
-- [训练和回测](docs/training.zh-CN.md) — 窗口长度、切分、特征、标签阈值、费用和打印的指标
-- [引擎回测](docs/engine.zh-CN.md) — 只做多权重，以及通过 quant-backtest-engine 的成交和账本
-- [环境](docs/setup.zh-CN.md) — uv、为什么钉住这些包、Python 3.12
-- [CI 和项目站点](docs/ci.zh-CN.md) — GitHub 工作流、冒烟用的样本、GitHub Pages
+- [数据](docs/data.zh-CN.md)。Parquet 目录，分钟线如何收成日线，CSV 列，`MOE_DATA_PARQUET`、`MOE_SYMBOL`、`MOE_SECURITY`、`MOE_DATA_CSV`。
+- [训练和回测](docs/training.zh-CN.md)。窗口长度，切分，特征，标签阈值，费用，打印的指标。
+- [引擎回测](docs/engine.zh-CN.md)。只做多的权重，以及 quant-backtest-engine 里的成交和账本。
+- [环境](docs/setup.zh-CN.md)。uv，这些包为什么钉住，Python 3.12。
+- [CI 和项目站点](docs/ci.zh-CN.md)。GitHub 工作流，冒烟样本，GitHub Pages。
 
 这些说明也在项目站点上：[https://runchengxie.github.io/moe-lstm/](https://runchengxie.github.io/moe-lstm/)。[`site/`](site/) 里的 Astro 应用同时提供首页和这些文档。2026-11-05 项目站点返回 HTTP 404，因为还没有 Pages 部署。预览和发布步骤写在 [`site/README.md`](site/README.md)。

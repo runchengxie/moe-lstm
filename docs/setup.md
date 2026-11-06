@@ -1,18 +1,18 @@
-**English** | [简体中文](setup.zh-CN.md)
+English | [简体中文](setup.zh-CN.md)
 
 # Setup
 
 [Project README](../README.md) · [Data](data.md) · [Training and backtest](training.md) · [CI and the project site](ci.md)
 
-Checked on Python 3.12. Install [uv](https://docs.astral.sh/uv/) 0.13.7, then from this directory:
+The check used Python 3.12. Install [uv](https://docs.astral.sh/uv/) 0.13.7, then run this from the repository directory.
 
 ```bash
 uv sync
 ```
 
-`uv sync` creates `.venv`, installs the locked dependencies, and installs this project. The import package is `moe_lstm` (`src/moe_lstm/`). The console script is `moe-lstm`, and `python -m moe_lstm` runs the same study. `pyproject.toml` pins the direct packages. `uv.lock` pins the full resolve. `.python-version` requests Python 3.12, and uv installs that interpreter when it is missing.
+`uv sync` creates `.venv`, installs the locked dependencies, and installs this project. The import name is `moe_lstm`, in `src/moe_lstm/`. The console command is `moe-lstm`. `python -m moe_lstm` runs the same study. `pyproject.toml` pins the direct packages. `uv.lock` pins the full resolve. `.python-version` names Python 3.12. When that interpreter is missing, uv installs it.
 
-The direct pins are the set that installed cleanly on Python 3.12 on 2026-11-05, plus pyarrow 26.0.1 for the Hive loader:
+These direct pins installed cleanly on Python 3.12 on 2026-11-05. The Hive loader also pins pyarrow 26.0.1.
 
 | Package | Pin |
 | --- | --- |
@@ -26,9 +26,9 @@ The direct pins are the set that installed cleanly on Python 3.12 on 2026-11-05,
 | seaborn | 0.13.2 |
 | pyarrow | 26.0.1 |
 
-Keras is pinned because TensorFlow 2.21.0 only requires `keras>=3.12`. Exact pins keep a later pandas 4 or a newer numpy from being selected on a fresh install. K-Means sets `n_init=10` because scikit-learn 1.4 changed the default to `auto`.
+Keras is pinned on its own. TensorFlow 2.21.0 only asks for `keras>=3.12`. With the pins frozen, a fresh install stays on pandas 3.1.1 and numpy 2.5.4. K-Means sets `n_init` to 10. scikit-learn 1.4 changed the default to `auto`.
 
-How those pins are exercised in GitHub Actions is in [CI and the project site](ci.md). What the script prints after it trains is in [Training and backtest](training.md).
+How GitHub Actions runs these pins is in [CI and the project site](ci.md). What the script prints after training is in [Training and backtest](training.md).
 
 ## Tests
 
@@ -36,9 +36,9 @@ How those pins are exercised in GitHub Actions is in [CI and the project site](c
 uv run python -m unittest discover -s tests -t . -v
 ```
 
-Loading, labels, the split, and the backtest do not import TensorFlow. `tests/test_model.py` builds the mixture and runs `main(epochs=1)` when TensorFlow is installed, and skips otherwise.
+The loading, label, split, and backtest tests use pandas and scikit-learn. When TensorFlow is installed, `tests/test_model.py` builds the mixture and runs `main(epochs=1)`. When TensorFlow is absent, those tests skip.
 
-The Hive aggregation check does not need TensorFlow:
+The Hive aggregation check uses pandas and pyarrow.
 
 ```bash
 uv run python -m unittest tests.test_hive_daily_bars
