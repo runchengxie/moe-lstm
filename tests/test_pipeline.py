@@ -377,26 +377,72 @@ class SplitAndBacktestTests(unittest.TestCase):
         self.assertNotAlmostEqual(held["Total Return"], every_bar)
 
         flipped = moe_lstm.backtest([1, 1, 0, 0], frame, "Manual", fee=0.001)
-        flip_strategy = np.array(
+        flat_strategy = np.array(
             [
                 1 * 0.01 - 0.001,
                 1 * 0.02,
-                -1 * -0.03 - 0.002,
-                -1 * 0.04,
+                0 * -0.03 - 0.001,
+                0 * 0.04,
             ]
         )
-        self.assertAlmostEqual(flipped["Total Return"], float(np.prod(1 + flip_strategy) - 1))
+        self.assertAlmostEqual(flipped["Total Return"], float(np.prod(1 + flat_strategy) - 1))
+        stayed_out = moe_lstm.backtest([0, 0, 0, 0], frame, "Manual", fee=0.001)
+        self.assertEqual(stayed_out["Total Return"], 0.0)
+        self.assertEqual(stayed_out["Max Drawdown"], 0.0)
 
-    def test_drawdown_sign_and_zero_volatility_sharpe(self):
+    def test_drawdown_includes_the_starting_equity(self):
         down = pd.DataFrame({"Tomorrow_Change": [-0.1, -0.1]})
         result = moe_lstm.backtest([1, 1], down, "Manual", fee=0)
         self.assertAlmostEqual(result["Total Return"], 0.81 - 1)
-        self.assertAlmostEqual(result["Max Drawdown"], (0.81 - 0.9) / 0.9)
+        self.assertAlmostEqual(result["Max Drawdown"], 0.81 - 1)
+
+        up_then_down = pd.DataFrame({"Tomorrow_Change": [0.1, -0.1]})
+        peaked = moe_lstm.backtest([1, 1], up_then_down, "Manual", fee=0)
+        self.assertAlmostEqual(peaked["Max Drawdown"], (0.99 - 1.1) / 1.1)
+
+        opened = moe_lstm.backtest(
+            [1], pd.DataFrame({"Tomorrow_Change": [0.0]}), "Manual", fee=0.0005
+        )
+        self.assertAlmostEqual(opened["Total Return"], -0.0005)
+        self.assertAlmostEqual(opened["Max Drawdown"], -0.0005)
 
         flat = pd.DataFrame({"Tomorrow_Change": [0.0, 0.0, 0.0]})
         quiet = moe_lstm.backtest([1, 1, 1], flat, "Manual", fee=0)
         self.assertEqual(quiet["Total Return"], 0.0)
+        self.assertEqual(quiet["Max Drawdown"], 0.0)
         self.assertTrue(np.isnan(quiet["Sharpe Ratio"]))
+
+    def test_oos_table_keeps_soft_probabilities_and_dates(self):
+        dates = pd.to_datetime(["2020-01-02", "2020-01-03"])
+        table = moe_lstm.oos_probability_frame(dates, "Manual", [0.2, 0.8], [0, 1])
+        self.assertEqual(list(table["Model"]), ["Manual", "Manual"])
+        self.assertAlmostEqual(float(table["Probability"].iloc[0]), 0.2)
+        self.assertEqual(list(table["Prediction"]), [0, 1])
+        self.assertEqual(table["Date"].iloc[1], dates[1])
+        with tempfile.TemporaryDirectory() as directory:
+            path = str(Path(directory) / "oos.csv")
+            moe_lstm.write_oos_probabilities([table], path)
+            loaded = pd.read_csv(path)
+        self.assertEqual(list(loaded.columns), ["Date", "Model", "Probability", "Prediction"])
+        self.assertAlmostEqual(float(loaded["Probability"].iloc[1]), 0.8)
+
+    def test_label_window_starts_after_the_feature_cutoff(self):
+        closes = 100 + np.arange(40, dtype=float)
+        frame = moe_lstm.build_feature_frame(_load(_price_frame(closes)))
+        close = frame["Close/Last"].to_numpy()
+        forward = close[1:] / close[:-1] - 1
+        self.assertTrue(np.allclose(frame["Tomorrow_Change"].iloc[:-1].to_numpy(), forward))
+        labels = moe_lstm.label_directions(pd.Series([0.002, 0.001, -0.01, 0.0020000001]))
+        self.assertEqual(list(labels), [0, 0, 0, 1])
+        lookback = moe_lstm.LOOKBACK
+        windows, targets = moe_lstm.make_windows(close.reshape(-1, 1), frame["Target"].to_numpy(), lookback)
+        self.assertEqual(windows[0, -1, 0], close[lookback - 1])
+        self.assertNotEqual(windows[0, -1, 0], close[lookback])
+        self.assertEqual(targets[0], frame["Target"].iloc[lookback])
+        split = moe_lstm.window_split(len(frame), lookback)
+        last_fit_feature = split.n_fit - 1 + lookback - 1
+        self.assertEqual(split.n_scale_rows, last_fit_feature + 1)
+        self.assertEqual(last_fit_feature + 1, split.n_scale_rows)
 
     def test_backtest_rejects_bad_inputs(self):
         frame = pd.DataFrame({"Tomorrow_Change": [0.01, 0.02], "Daily_Return": [0.5, 0.5]})

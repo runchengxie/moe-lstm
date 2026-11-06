@@ -1,4 +1,5 @@
 __pycache__/
+oos_probabilities.csv
 *.py[cod]
 .venv/
 .pytest_cache/

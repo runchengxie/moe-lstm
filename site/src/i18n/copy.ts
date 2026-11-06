@@ -154,8 +154,8 @@ export const copy = {
       {
         name: L("回测", "Backtest"),
         detail: L(
-          "测试段上，预测为 1 则做多，为 0 则做空，并与买入持有对照。脚本打印 accuracy、precision、recall、F1、AUC-ROC、总收益、最大回撤，以及按 √252 年化的夏普。本页不记录任何一次运行的数值。",
-          "On the test slice, a prediction of 1 is long and a prediction of 0 is short, compared with buy and hold. The script prints accuracy, precision, recall, F1, AUC-ROC, total return, max drawdown, and a Sharpe ratio annualized with √252. This page does not record figures from any run.",
+          "测试段上，预测为 1 则做多，为 0 则空仓，并与买入持有对照。类别 0 里有小涨。脚本打印 accuracy、precision、recall、F1、AUC-ROC、总收益、最大回撤，以及按 √252 年化的夏普。样本外的日期和概率写在 `oos_probabilities.csv`。本页不记录任何一次运行的数值。",
+          "On the test slice, a prediction of 1 is long and a prediction of 0 is flat, compared with buy and hold. Class 0 includes small gains. The script prints accuracy, precision, recall, F1, AUC-ROC, total return, max drawdown, and a Sharpe ratio annualized with √252. Out-of-sample dates and probabilities are written to `oos_probabilities.csv`. This page does not record figures from any run.",
         ),
       },
     ],
@@ -428,8 +428,8 @@ export const architecture = {
   ),
   splitHeading: L("窗口、切分和缩放", "Windows, split, and scaling"),
   split: L(
-    "回看 `LOOKBACK = 5`。按时间，前 80% 的窗口训练，后 20% 测试。训练段最后 20% 做早停验证。`MinMaxScaler` 只在拟合窗口的特征行上拟合。标签：下一根收盘到收盘收益高于 0.2%（`THRESHOLD = 0.002`）为 1，等于 0.2% 为 0。最多 50 个 epoch，batch 16，早停 patience 5。手工特征、K-Means（5 簇）、3×3 SOM 三个子集各训练一次同一结构。预测 1 做多，0 做空，对照买入持有。",
-    "Lookback is `LOOKBACK = 5`. In time order, the first 80% of windows train and the last 20% test. The last 20% of the training block is the early-stopping validation set. `MinMaxScaler` is fit only on the feature rows of the fit windows. The label is 1 when the next close-to-close return is above 0.2% (`THRESHOLD = 0.002`), and 0 when it is equal to 0.2%. Up to 50 epochs, batch size 16, early-stopping patience 5. Manual features, K-Means (5 clusters), and a 3×3 SOM each train that same architecture once. A prediction of 1 is long and 0 is short, set against buy and hold.",
+    "回看 `LOOKBACK = 5`。窗口是特征行 t-5 到 t-1，标签是 t 到 t+1 的收盘收益。按时间，前 80% 的窗口训练，后 20% 测试。训练段最后 20% 做早停验证。`MinMaxScaler` 只在拟合窗口的特征行上拟合。标签高于 0.2%（`THRESHOLD = 0.002`）为 1，等于 0.2% 为 0。最多 50 个 epoch，batch 16，早停 patience 5。手工特征、K-Means（5 簇）、3×3 SOM 三个子集各训练一次同一结构。预测 1 做多，0 空仓，对照买入持有。",
+    "Lookback is `LOOKBACK = 5`. A window is feature rows t-5 through t-1, and the label is the close-to-close return from t to t+1. In time order, the first 80% of windows train and the last 20% test. The last 20% of the training block is the early-stopping validation set. `MinMaxScaler` is fit only on the feature rows of the fit windows. The label is 1 when that return is above 0.2% (`THRESHOLD = 0.002`), and 0 when it is equal to 0.2%. Up to 50 epochs, batch size 16, early-stopping patience 5. Manual features, K-Means (5 clusters), and a 3×3 SOM each train that same architecture once. A prediction of 1 is long and 0 is flat, set against buy and hold.",
   ),
   more: L("列约定、费用和打印的指标在文档里。", "Column rules, fees, and the printed metrics are in the docs."),
 };

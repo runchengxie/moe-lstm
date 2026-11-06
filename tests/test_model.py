@@ -105,7 +105,10 @@ class ModelTests(unittest.TestCase):
             raw.to_csv(handle.name, index=False)
             csv_path = handle.name
         previous = os.environ.get("MOE_DATA_CSV")
+        previous_oos = os.environ.get("MOE_OOS_CSV")
+        oos_path = csv_path + ".oos.csv"
         os.environ["MOE_DATA_CSV"] = csv_path
+        os.environ["MOE_OOS_CSV"] = oos_path
         stdout = io.StringIO()
         try:
             with warnings.catch_warnings(record=True) as caught:
@@ -117,7 +120,22 @@ class ModelTests(unittest.TestCase):
                 os.environ.pop("MOE_DATA_CSV", None)
             else:
                 os.environ["MOE_DATA_CSV"] = previous
+            if previous_oos is None:
+                os.environ.pop("MOE_OOS_CSV", None)
+            else:
+                os.environ["MOE_OOS_CSV"] = previous_oos
             os.remove(csv_path)
+            if os.path.exists(oos_path):
+                saved = pd.read_csv(oos_path)
+                os.remove(oos_path)
+            else:
+                saved = None
+
+        self.assertIsNotNone(saved)
+        self.assertEqual(list(saved.columns), ["Date", "Model", "Probability", "Prediction"])
+        self.assertEqual(set(saved["Model"]), {"Manual", "KMeans", "SOM"})
+        self.assertTrue(saved["Probability"].between(0, 1).all())
+        self.assertGreater(saved["Probability"].nunique(), 1)
 
         self.assertEqual(list(metrics["Model"]), ["Manual", "KMeans", "SOM"])
         self.assertTrue(np.isfinite(metrics["Total Return"]).all())
