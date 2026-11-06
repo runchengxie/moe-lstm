@@ -1,0 +1,11 @@
+===== 模型性能对比 =====
+    Model  Accuracy  Precision  ...  Total Return  Max Drawdown  Sharpe Ratio
+0  Manual     0.548        0.0  ...           0.0           0.0           NaN
+1  KMeans     0.548        0.0  ...           0.0           0.0           NaN
+2     SOM     0.548        0.0  ...           0.0           0.0           NaN
+
+[3 rows x 9 columns]
+    Model  Total Return  Max Drawdown  Sharpe Ratio
+0  Manual           0.0           0.0           NaN
+1  KMeans           0.0           0.0           NaN
+2     SOM           0.0           0.0           NaN

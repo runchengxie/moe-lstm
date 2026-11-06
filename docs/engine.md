@@ -20,4 +20,4 @@ uv pip install /path/to/quant-backtest-engine/python
 uv run python examples/engine_backtest.py
 ```
 
-With `QUANT_ENGINE_BINARY` and `QUANT_ENGINE_SHA256` set, the script calls `size` and, when the plan has an order, `run_sessions`. The fields it prints are the engine's JSON. This note leaves those numbers out. The project site leaves its metric cells empty.
+With `QUANT_ENGINE_BINARY` and `QUANT_ENGINE_SHA256` set, the script calls `size` and, when the plan has an order, `run_sessions`. The fields it prints are the engine's JSON. This note leaves those numbers out. The project site records one study-script backtest. It does not print this engine ledger.

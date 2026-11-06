@@ -20,4 +20,4 @@ uv pip install /path/to/quant-backtest-engine/python
 uv run python examples/engine_backtest.py
 ```
 
-设了 `QUANT_ENGINE_BINARY` 和 `QUANT_ENGINE_SHA256` 之后，脚本调用 `size`。计划里有订单时再调用 `run_sessions`。打印出来的字段是引擎的 JSON。这份说明把那些数字留在引擎那边。项目站点的指标格子空着。
+设了 `QUANT_ENGINE_BINARY` 和 `QUANT_ENGINE_SHA256` 之后，脚本调用 `size`。计划里有订单时再调用 `run_sessions`。打印出来的字段是引擎的 JSON。这份说明把那些数字留在引擎那边。项目站点记下了一次研究脚本自己的回测，不印这份引擎账本。

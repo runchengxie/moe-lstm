@@ -699,7 +699,7 @@ html[lang="en"] [data-locale="zh"] {
 
 .metric-card {
   background: var(--bg-elev);
-  border: 1px dashed var(--line);
+  border: 1px solid var(--line);
   border-radius: 0.8rem;
   padding: 0.8rem 0.85rem 0.9rem;
 }
@@ -731,7 +731,7 @@ html[lang="en"] [data-locale="zh"] {
 .metric-card dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
-  color: var(--muted);
+  color: var(--ink);
 }
 
 .chart-slot {
@@ -744,17 +744,19 @@ html[lang="en"] [data-locale="zh"] {
 }
 
 .chart-frame {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-template-rows: minmax(9rem, 14rem) auto;
-  gap: 0.4rem 0.7rem;
   margin-top: 0.4rem;
-  padding: 0.8rem;
-  border: 1px dashed var(--line);
+  padding: 0.45rem;
+  border: 1px solid var(--line);
   border-radius: 0.8rem;
-  background:
-    linear-gradient(to top, transparent 0, transparent 100%),
-    var(--bg-elev);
+  background: var(--bg-elev);
+  box-shadow: var(--shadow);
+}
+
+.chart-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.45rem;
 }
 
 .chart-y {
@@ -782,8 +784,14 @@ html[lang="en"] [data-locale="zh"] {
   font-size: 0.78rem;
 }
 
-td[data-value="empty"],
-dd[data-value="empty"] {
+td[data-value="run"],
+dd[data-value="run"] {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+td[data-value="na"],
+dd[data-value="na"] {
   color: var(--muted);
 }
 
