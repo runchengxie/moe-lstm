@@ -104,7 +104,7 @@ if (!index.includes("/moe-lstm/docs/")) {
   process.exit(1);
 }
 const homeNeedles = [
-  "coming once quant-backtest-engine is wired",
+  "This page stores no engine run.",
   "这些格子是占位",
   "data-value=\"empty\"",
   "data-chart=\"equity\"",

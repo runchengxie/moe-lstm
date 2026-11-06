@@ -35,3 +35,7 @@ RSI 是 14 日简单平均。一段里既没有上涨也没有下跌时取 50，
 总收益是期末净值减 1。最大回撤是 `净值 / 累计峰值 - 1` 的最小值，为零或负数。夏普率是策略收益的均值除以样本标准差，再乘以 `sqrt(252)`。这个年化假设每根 K 线对应一个交易日。如果日期间隔的中位数不在 1 到 3 天之内，脚本会打印警告，夏普率的算法不变。策略收益为常数时，夏普率是 `NaN`。测试标签只有一个类别时，AUC 是 `NaN`，其余分类指标使用 `zero_division=0`。
 
 输出列是 `Model`、`Accuracy`、`Precision`、`Recall`、`F1`、`AUC-ROC`、`Total Return`、`Max Drawdown`、`Sharpe Ratio`，模型名为 `Manual`、`KMeans`、`SOM`。
+
+## 引擎路径
+
+quant-backtest-engine 的成交和账本是另一条路径。信号从 `moe_lstm.signals` 出去，线协议请求在 `moe_lstm.engine`。运行方式写在 [引擎回测](engine.zh-CN.md)。上面的打印表仍然来自 `moe_lstm.backtest`。

@@ -33,3 +33,7 @@ The default fee is `0.0005` return units per unit of position turnover. The acco
 Total return is final equity minus 1. Max drawdown is the minimum of `equity / running_peak - 1` and is zero or negative. Sharpe ratio is the mean strategy return divided by its sample standard deviation, times `sqrt(252)`. That scaling assumes one bar per trading session. If the median gap between dates is outside 1 to 3 days, the script prints a warning and still reports the same ratio. A constant strategy return has Sharpe `NaN`. If the test labels contain one class, AUC is `NaN` and the other classification scores use `zero_division=0`.
 
 Reported columns are `Model`, `Accuracy`, `Precision`, `Recall`, `F1`, `AUC-ROC`, `Total Return`, `Max Drawdown`, and `Sharpe Ratio` for `Manual`, `KMeans`, and `SOM`.
+
+## Engine path
+
+Fills and the ledger for quant-backtest-engine are a separate path. Signals leave through `moe_lstm.signals`, and the wire requests are in `moe_lstm.engine`. How to run that path is in [Engine backtest](engine.md). The printed table above is still `moe_lstm.backtest`.

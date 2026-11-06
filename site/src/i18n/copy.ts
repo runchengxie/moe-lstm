@@ -318,16 +318,16 @@ export const copy = {
       },
     ],
     note: L(
-      "包已经在仓库里。还没接上的是下一节的 quant-backtest-engine。",
-      "The package is in the repository. quant-backtest-engine is still not wired up.",
+      "包和引擎适配器都在仓库里。本页仍不放回测数字。",
+      "The package and the engine adapter are in the repository. This page still publishes no backtest figures.",
     ),
   },
   next: {
     index: "05",
-    heading: L("还没做", "Not done yet"),
+    heading: L("边界", "Boundary"),
     intro: L(
-      "包已经拆好。回测引擎还没有接上。",
-      "The package is split. The backtest engine is not wired up.",
+      "包负责信号。引擎负责成交和账本。这一页仍然不填数字。",
+      "The package emits signals. The engine owns fills and the ledger. This page still fills in no figures.",
     ),
     items: [
       {
@@ -340,8 +340,8 @@ export const copy = {
       {
         term: L("quant-backtest-engine", "quant-backtest-engine"),
         detail: L(
-          "模型只输出信号或权重。成交和账本由这个库负责。还没有接上。",
-          "The model would emit signals or weights. Fills and the ledger would belong to this library. Not wired up.",
+          "信号或权重从 `moe_lstm.signals` 出去。成交和账本走这个库的 `size` 与 `run_sessions`。示例是 `examples/engine_backtest.py`。本页不放它的输出。",
+          "Signals or weights leave through `moe_lstm.signals`. Fills and the ledger go through this library's `size` and `run_sessions`. The example is `examples/engine_backtest.py`. This page does not publish that output.",
         ),
         href: links.engine,
       },
@@ -363,8 +363,8 @@ export const copy = {
         href: links.engine,
         label: L("quant-backtest-engine", "quant-backtest-engine"),
         note: L(
-          "计划中的回测库，还没有接上。模型将输出信号或权重，由它处理成交和账本。本仓库的依赖在 `pyproject.toml` 和 `uv.lock`。",
-          "The planned backtest library. It is not wired up. The model would emit signals or weights; it would handle fills and the ledger. This repository's dependencies are in `pyproject.toml` and `uv.lock`.",
+          "成交和账本。本仓库用 `examples/engine_backtest.py` 调用它的 Python 客户端。依赖仍在 `pyproject.toml` 和 `uv.lock`，客户端要从那个仓库安装。",
+          "Fills and the ledger. This repository calls its Python client from `examples/engine_backtest.py`. Dependencies stay in `pyproject.toml` and `uv.lock`. Install the client from that repository.",
         ),
       },
       {
@@ -388,8 +388,8 @@ export const showcase = {
   kicker: L("结果", "Results"),
   heading: L("回测展示", "Performance"),
   empty: L(
-    "这些格子是占位，不是结果。这里没有存任何一次运行。数字等 quant-backtest-engine 接上之后才会放进来。本页不编造收益、夏普或任何数值。",
-    "These cells are placeholders, not results. No run is stored here. Figures are coming once quant-backtest-engine is wired. This page does not invent returns, Sharpe ratios, or any other number.",
+    "这些格子是占位，不是结果。适配器在仓库里，这一页没有存任何一次引擎运行。本页不编造收益、夏普或任何数值。",
+    "These cells are placeholders, not results. The adapter is in the repository. This page stores no engine run. It does not invent returns, Sharpe ratios, or any other number.",
   ),
   chartTitle: L("权益曲线", "Equity"),
   chartEmpty: L("占位，没有曲线", "Placeholder, no series"),

@@ -38,6 +38,7 @@ MOE_DATA_PARQUET=/path/to/dataset-root MOE_SYMBOL=AAPL MPLBACKEND=Agg uv run moe
 
 - [数据](docs/data.zh-CN.md) — Parquet 目录、分钟线如何收成日线、CSV 列，以及 `MOE_DATA_PARQUET`、`MOE_SYMBOL`、`MOE_SECURITY`、`MOE_DATA_CSV`
 - [训练和回测](docs/training.zh-CN.md) — 窗口长度、切分、特征、标签阈值、费用和打印的指标
+- [引擎回测](docs/engine.zh-CN.md) — 只做多权重，以及通过 quant-backtest-engine 的成交和账本
 - [环境](docs/setup.zh-CN.md) — uv、为什么钉住这些包、Python 3.12
 - [CI 和项目站点](docs/ci.zh-CN.md) — GitHub 工作流、冒烟用的样本、GitHub Pages
 

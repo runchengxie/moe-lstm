@@ -13,6 +13,7 @@ export const docPages = [
   { slug: "setup", en: "setup.md", zh: "setup.zh-CN.md" },
   { slug: "data", en: "data.md", zh: "data.zh-CN.md" },
   { slug: "training", en: "training.md", zh: "training.zh-CN.md" },
+  { slug: "engine", en: "engine.md", zh: "engine.zh-CN.md" },
   { slug: "ci", en: "ci.md", zh: "ci.zh-CN.md" },
 ] as const;
 
