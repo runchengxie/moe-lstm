@@ -118,6 +118,18 @@ const docsLink = L("文档", "Docs");
             ))
           }
         </ol>
+        <ol class="moe-flow" aria-label="sparse top-k">
+          {
+            architecture.flow.map((item) => (
+              <li>
+                <span class="arch-n">{item.n}</span>
+                <span class="arch-k"><Tx text={item.k} /></span>
+                <span class="arch-v"><Tx text={item.v} /></span>
+              </li>
+            ))
+          }
+        </ol>
+        <p class="note"><Tx text={architecture.sparseNote} /></p>
         <h3><Tx text={architecture.dataHeading} /></h3>
         <p><Tx text={architecture.data} /></p>
         <h3><Tx text={architecture.splitHeading} /></h3>

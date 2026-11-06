@@ -30,7 +30,7 @@ MOE_DATA_PARQUET=/path/to/dataset-root MOE_SYMBOL=AAPL MPLBACKEND=Agg uv run moe
 
 ## What you get
 
-One run trains three models: a hand-picked feature set, a K-Means subset, and a self-organizing-map subset. Each one is an LSTM mixture of experts. The three experts read the same window. They differ by initialization and by the learned gate. The script prints class counts and does not resample. It then prints classification metrics and a long-or-flat backtest next to buy and hold.
+One run trains three models: a hand-picked feature set, a K-Means subset, and a self-organizing-map subset. Each one is an LSTM mixture of experts. The three experts read the same window. They differ by initialization and by the learned router. The default gate is sparse top-1: the winning expert has weight 1 and the other two have weight 0. `MOE_TOP_K=dense` keeps the softmax over all three. These experts are LSTMs, not a Transformer mixture. The script prints class counts and does not resample. It then prints classification metrics and a long-or-flat backtest next to buy and hold.
 
 ## More detail
 

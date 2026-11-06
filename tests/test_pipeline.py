@@ -124,6 +124,48 @@ class ContractTests(unittest.TestCase):
             else:
                 os.environ["MOE_EPOCHS"] = previous
 
+    def test_top_k_and_aux_weight_follow_the_environment(self):
+        previous_k = os.environ.get("MOE_TOP_K")
+        previous_aux = os.environ.get("MOE_AUX_LOSS")
+        try:
+            os.environ.pop("MOE_TOP_K", None)
+            os.environ.pop("MOE_AUX_LOSS", None)
+            self.assertEqual(moe_lstm.resolve_top_k(), moe_lstm.TOP_K)
+            self.assertEqual(moe_lstm.resolve_top_k(), 1)
+            self.assertIsNone(moe_lstm.resolve_top_k(None))
+            self.assertEqual(moe_lstm.resolve_top_k(2), 2)
+            self.assertEqual(moe_lstm.resolve_aux_loss_weight(), moe_lstm.AUX_LOSS_WEIGHT)
+            self.assertEqual(moe_lstm.resolve_aux_loss_weight(top_k=None), 0.0)
+            self.assertEqual(moe_lstm.resolve_aux_loss_weight(0), 0.0)
+            with self.assertRaises(ValueError):
+                moe_lstm.resolve_top_k(0)
+            with self.assertRaises(ValueError):
+                moe_lstm.resolve_top_k(moe_lstm.N_EXPERTS)
+            os.environ["MOE_TOP_K"] = "dense"
+            self.assertIsNone(moe_lstm.resolve_top_k())
+            self.assertEqual(moe_lstm.resolve_aux_loss_weight(), 0.0)
+            self.assertEqual(moe_lstm.resolve_top_k(2), 2)
+            os.environ["MOE_TOP_K"] = "2"
+            os.environ["MOE_AUX_LOSS"] = "0"
+            self.assertEqual(moe_lstm.resolve_top_k(), 2)
+            self.assertEqual(moe_lstm.resolve_aux_loss_weight(), 0.0)
+            os.environ["MOE_TOP_K"] = "nope"
+            with self.assertRaises(SystemExit):
+                moe_lstm.resolve_top_k()
+            os.environ["MOE_TOP_K"] = "1"
+            os.environ["MOE_AUX_LOSS"] = "nope"
+            with self.assertRaises(SystemExit):
+                moe_lstm.resolve_aux_loss_weight()
+        finally:
+            if previous_k is None:
+                os.environ.pop("MOE_TOP_K", None)
+            else:
+                os.environ["MOE_TOP_K"] = previous_k
+            if previous_aux is None:
+                os.environ.pop("MOE_AUX_LOSS", None)
+            else:
+                os.environ["MOE_AUX_LOSS"] = previous_aux
+
 
 class LoadTests(unittest.TestCase):
     def test_missing_file_tells_the_user_which_variable_to_set(self):

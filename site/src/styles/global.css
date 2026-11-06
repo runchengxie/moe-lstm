@@ -379,6 +379,24 @@ h1 {
   font-size: 0.92rem;
 }
 
+.moe-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+}
+
+.moe-flow li {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent);
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.8rem 0.85rem;
+  box-shadow: var(--shadow);
+}
+
 .facts {
   margin: 0.4rem 0 0;
 }
@@ -771,6 +789,7 @@ dd[data-value="empty"] {
 
 @media (max-width: 800px) {
   .arch,
+  .moe-flow,
   .metric-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -802,6 +821,7 @@ dd[data-value="empty"] {
   }
 
   .arch,
+  .moe-flow,
   .metric-grid {
     grid-template-columns: 1fr;
   }
@@ -842,6 +862,7 @@ dd[data-value="empty"] {
 
   .pr,
   .arch li,
+  .moe-flow li,
   .table-wrap,
   pre {
     box-shadow: none;
