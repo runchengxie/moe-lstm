@@ -24,7 +24,7 @@ jobs:
         run: uv sync --frozen
 
       - name: Byte-compile
-        run: uv run python -m py_compile moe_lstm.py
+        run: uv run python -m compileall -q src/moe_lstm
 
       - name: Smoke train
         env:
@@ -32,4 +32,4 @@ jobs:
           MOE_EPOCHS: "1"
           MPLBACKEND: Agg
           TF_CPP_MIN_LOG_LEVEL: "2"
-        run: uv run python moe_lstm.py
+        run: uv run moe-lstm

@@ -1,18 +1,12 @@
 import contextlib
 import io
 import os
-import sys
 import tempfile
 import unittest
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 

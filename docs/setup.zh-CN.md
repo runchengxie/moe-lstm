@@ -12,7 +12,7 @@
 uv sync
 ```
 
-`uv sync` 会创建 `.venv` 并安装锁定的依赖。`pyproject.toml` 锁定直接依赖。`uv.lock` 锁定完整解析结果。本仓库是脚本，不是可安装的包。`.python-version` 指定 Python 3.12，本机没有该版本时 uv 会安装它。
+`uv sync` 会创建 `.venv`，安装锁定的依赖，并安装本项目。导入名是 `moe_lstm`，目录是 `src/moe_lstm/`。控制台命令是 `moe-lstm`。`python -m moe_lstm` 跑同一次研究。`pyproject.toml` 锁定直接依赖。`uv.lock` 锁定完整解析结果。`.python-version` 指定 Python 3.12，本机没有该版本时 uv 会安装它。
 
 直接依赖是 2026-11-05 在 Python 3.12 上能干净安装的那一组，再加上 Hive 加载用的 pyarrow 26.0.1：
 
