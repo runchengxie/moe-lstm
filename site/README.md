@@ -67,7 +67,7 @@ pnpm preview
 
 ## 内容从哪来
 
-文案在 `src/i18n/copy.ts`，中英文字段写在一起。首页写下 2026-11-06 的 ^GSPC 日线运行，数字在 `public/results/run.json`。行情文件不进仓库。文档页读取仓库根目录 `docs/`。
+文案在 `src/i18n/copy.ts`，中英文字段写在一起。首页写下 2026-11-06 的 SPY 日线运行，稀疏 top-1 是主表，稠密是对照。数字在 `public/results/run.json`。行情文件不进仓库。文档页读取仓库根目录 `docs/`。
 
 文档页读取仓库根目录 `docs/` 里的中英 Markdown（环境、数据、训练、CI），不另起一套文案。
 
@@ -137,6 +137,6 @@ The workflow is already on `main` (#7, `37671ab`). When #7 was written, Source w
 
 ## Where the words live
 
-Copy is in `src/i18n/copy.ts`, with Chinese and English on the same fields. The home page records the 2026-11-06 ^GSPC daily run. The numbers live in `public/results/run.json`. The price file stays out of the repository.
+Copy is in `src/i18n/copy.ts`, with Chinese and English on the same fields. The home page records the 2026-11-06 SPY daily run. Sparse top-1 is the main table. Dense is the comparison. The numbers live in `public/results/run.json`. The price file stays out of the repository.
 
 The docs routes read the bilingual Markdown in the repository `docs/` folder (setup, data, training, CI). They do not keep a second copy of that text.
