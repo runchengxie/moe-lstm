@@ -46,16 +46,16 @@ export const copy = {
   meta: {
     title: L("moe_lstm 回测和结构", "moe_lstm results and architecture"),
     description: L(
-      "首页是 2026-11-06 的 ^GSPC 日线运行。三个模型都空仓。页面也写下稀疏 top-1 门控、Hive Parquet，以及 CSV 回退。",
-      "The home page is the 2026-11-06 ^GSPC daily run. All three models stayed flat. The page also describes the sparse top-1 gate, Hive Parquet, and the CSV fallback.",
+      "首页是 2026-11-06 的 SPY 日线运行。稀疏 top-1 是主结果，三个模型都空仓。稠密对照的硬标签也是空仓。页面也写下门控、Hive Parquet，以及 CSV 回退。",
+      "The home page is the 2026-11-06 SPY daily run. Sparse top-1 is the featured result, and all three models stayed flat. The dense ablation has the same hard labels. The page also describes the gate, Hive Parquet, and the CSV fallback.",
     ),
   },
   hero: {
     kicker: L("研究脚本", "Research script"),
     title: L("下一交易日收益的 MoE-LSTM", "An MoE-LSTM for the next session's return"),
     lede: L(
-      "三个 LSTM 专家读同一段窗口。默认门控是 top-1。下面的格子是 2026-11-06 的 ^GSPC 日线运行。",
-      "Three LSTM experts read one window. The default gate is top-1. The cells below are the 2026-11-06 ^GSPC daily run.",
+      "三个 LSTM 专家读同一段窗口。默认门控是 top-1。下面的格子是 2026-11-06 的 SPY 日线运行。",
+      "Three LSTM experts read one window. The default gate is top-1. The cells below are the 2026-11-06 SPY daily run.",
     ),
     notices: [
       {
@@ -68,8 +68,8 @@ export const copy = {
       },
     ],
     asOf: L(
-      "写于 2026-11-06（Asia/Shanghai）。数字来自 main 的 `2254a46`（#20 的 squash，树 `82083be`）。训练进程跑的是同一棵树的 `2de4f96`，墙钟 26 秒。标的是 ^GSPC 日线，2015-01-02 到 2026-11-05，共 2979 根，来自 Yahoo Finance 的未复权 OHLC。行情文件不在仓库里。",
-      "Written 2026-11-06 (Asia/Shanghai). The figures come from main at `2254a46` (the squash of #20, tree `82083be`). Training ran `2de4f96`, that same tree, in 26 seconds of wall time. The series is ^GSPC daily, 2 Jan 2015 to 5 Nov 2026, 2,979 bars, Yahoo Finance unadjusted OHLC. The price file is not in the repository.",
+      "写于 2026-11-06（Asia/Shanghai）。数字来自代码 `5cf5003`。标的是 SPY 日线，2020-01-13 到 2025-01-10，共 1257 根。这是仓库外准备的公开 CSV。原文件日期是 ISO，脚本只认 `%m/%d/%Y`，所以运行前只改了日期，价格没动。原 CSV 不在 git 里。稀疏和稠密各跑了 21 秒。",
+      "Written 2026-11-06 (Asia/Shanghai). The figures come from code `5cf5003`. The series is SPY daily, 13 Jan 2020 to 10 Jan 2025, 1,257 bars. It is a public CSV prepared outside the repository. The source dates are ISO. The loader accepts only `%m/%d/%Y`, so the run rewrote the dates and left the prices unchanged. The raw CSV is not in git. Sparse and dense each took 21 seconds.",
     ),
   },
   what: {
@@ -154,8 +154,8 @@ export const copy = {
       {
         name: L("回测", "Backtest"),
         detail: L(
-          "测试段上，预测为 1 则做多，为 0 则空仓，并与买入持有对照。类别 0 里有小涨。脚本打印 accuracy、precision、recall、F1、AUC-ROC、总收益、最大回撤，以及按 √252 年化的夏普。样本外的日期和概率写在 `oos_probabilities.csv`。首页记下了 2026-11-06 的 ^GSPC 运行。",
-          "On the test slice, a prediction of 1 is long and a prediction of 0 is flat, compared with buy and hold. Class 0 includes small gains. The script prints accuracy, precision, recall, F1, AUC-ROC, total return, max drawdown, and a Sharpe ratio annualized with √252. Out-of-sample dates and probabilities are written to `oos_probabilities.csv`. The home page records the 2026-11-06 ^GSPC run.",
+          "测试段上，预测为 1 则做多，为 0 则空仓，并与买入持有对照。类别 0 里有小涨。脚本打印 accuracy、precision、recall、F1、AUC-ROC、总收益、最大回撤，以及按 √252 年化的夏普。样本外的日期和概率写在 `oos_probabilities.csv`。首页记下了 2026-11-06 的 SPY 运行，稀疏 top-1 是主表，稠密是对照。",
+          "On the test slice, a prediction of 1 is long and a prediction of 0 is flat, compared with buy and hold. Class 0 includes small gains. The script prints accuracy, precision, recall, F1, AUC-ROC, total return, max drawdown, and a Sharpe ratio annualized with √252. Out-of-sample dates and probabilities are written to `oos_probabilities.csv`. The home page records the 2026-11-06 SPY run. Sparse top-1 is the main table. Dense is the comparison.",
         ),
       },
     ],
@@ -318,8 +318,8 @@ export const copy = {
       },
     ],
     note: L(
-      "包和引擎适配器都在仓库里。首页记下了 2026-11-06 的 ^GSPC 运行。",
-      "The package and the engine adapter are in the repository. The home page records the 2026-11-06 ^GSPC run.",
+      "包和引擎适配器都在仓库里。首页记下了 2026-11-06 的 SPY 运行。",
+      "The package and the engine adapter are in the repository. The home page records the 2026-11-06 SPY run.",
     ),
   },
   next: {
@@ -388,8 +388,8 @@ export const showcase = {
   kicker: L("结果", "Results"),
   heading: L("这一次运行", "This run"),
   empty: L(
-    "标普 500（^GSPC）日线，2015-01-02 到 2026-11-05。测试段 591 个窗口，标签日从 2024-06-28 到 2026-11-04。三个模型的 sigmoid 都低于 0.5，预测全是 0，所以一直空仓。买入持有用同一段向前收益，费用是 0。",
-    "S&P 500 (^GSPC) daily bars, 2 Jan 2015 to 5 Nov 2026. The test slice is 591 windows, with label dates from 28 Jun 2024 to 4 Nov 2026. Every sigmoid score is below 0.5, so every prediction is 0 and the position stays flat. Buy and hold uses the same forward returns with fee 0.",
+    "SPY 日线，2020-01-13 到 2025-01-10，共 1257 根。测试段 247 个窗口，标签日从 2024-01-17 到 2025-01-08。主表是稀疏 top-1。三个模型的 sigmoid 都低于 0.5，预测全是 0，所以一直空仓。买入持有用同一段向前收益，费用是 0。稠密 softmax 另跑了一次，硬预测也全是空仓，AUC 写在对照表里。",
+    "SPY daily bars, 13 Jan 2020 to 10 Jan 2025, 1,257 sessions. The test slice is 247 windows, with label dates from 17 Jan 2024 to 8 Jan 2025. The main table is sparse top-1. Every sigmoid score is below 0.5, so every prediction is 0 and the position stays flat. Buy and hold uses the same forward returns with fee 0. A dense softmax run has the same hard labels. Its AUC is in the comparison table.",
   ),
   chartTitle: L("权益曲线", "Equity"),
   chartNote: L(
@@ -398,16 +398,21 @@ export const showcase = {
   ),
   confusionTitle: L("混淆矩阵", "Confusion"),
   confusionNote: L(
-    "预测为 Above 的格子都是 0。真值里 324 个 Not above，267 个 Above。",
-    "The Predicted Above column is 0. The truth column is 324 Not above and 267 Above.",
+    "这是稀疏 top-1 的混淆矩阵。预测为 Above 的格子都是 0。真值里 139 个 Not above，108 个 Above。",
+    "This is the sparse top-1 confusion matrix. The Predicted Above column is 0. The truth column is 139 Not above and 108 Above.",
   ),
   tableCaption: L(
-    "和脚本 `round(3)` 的打印一致。策略收益是常数时，夏普率是 NaN。买入持有没有分类分数。",
-    "These match the script's `round(3)` print. Sharpe is NaN when the strategy return is constant. Buy and hold has no class scores.",
+    "稀疏 top-1，和那次运行 `round(3)` 的打印一致。策略收益是常数时，夏普率是 NaN。买入持有没有分类分数。",
+    "Sparse top-1, matching that run's `round(3)` print. Sharpe is NaN when the strategy return is constant. Buy and hold has no class scores.",
   ),
   runMeta: L(
-    "默认稀疏 top-1，辅助损失系数 0.01。最多 50 个 epoch，早停耐心 5，批大小 16，费用 0.0005，标签阈值 0.002，回看 5。这次 K-Means 留下 RSI、EMA5、MACD、Volatility、Daily_Return。SOM 留下 EMA5、MACD、Volatility。",
-    "Default sparse top-1, auxiliary loss weight 0.01. Up to 50 epochs, early-stopping patience 5, batch size 16, fee 0.0005, label threshold 0.002, lookback 5. On this run K-Means kept RSI, EMA5, MACD, Volatility, and Daily_Return. SOM kept EMA5, MACD, and Volatility.",
+    "主结果是稀疏 top-1，辅助损失系数 0.01。最多 50 个 epoch，早停耐心 5，批大小 16，费用 0.0005，标签阈值 0.002，回看 5。这次 K-Means 留下 RSI、EMA5、MACD、Volatility、Daily_Return。SOM 留下 Low、Volatility。稠密对照用 `MOE_TOP_K=dense`，不加辅助损失。",
+    "The featured result is sparse top-1, auxiliary loss weight 0.01. Up to 50 epochs, early-stopping patience 5, batch size 16, fee 0.0005, label threshold 0.002, lookback 5. On this run K-Means kept RSI, EMA5, MACD, Volatility, and Daily_Return. SOM kept Low and Volatility. The dense comparison uses `MOE_TOP_K=dense` and adds no auxiliary loss.",
+  ),
+  denseHeading: L("稠密对照", "Dense comparison"),
+  denseCaption: L(
+    "同一次数据上的 `MOE_TOP_K=dense`。硬预测也全是空仓，所以收益、回撤和夏普与上面相同。AUC 不同。",
+    "The same data with `MOE_TOP_K=dense`. The hard predictions are also all flat, so return, drawdown, and Sharpe match the table above. AUC does not.",
   ),
   filesLabel: L("这次运行的文件：", "Files from this run: "),
   modelHeading: L("模型", "Model"),
@@ -416,11 +421,11 @@ export const showcase = {
       id: "manual",
       name: "Manual",
       values: {
-        accuracy: "0.548",
+        accuracy: "0.563",
         precision: "0.0",
         recall: "0.0",
         f1: "0.0",
-        "auc-roc": "0.528",
+        "auc-roc": "0.539",
         "total-return": "0.0",
         "max-drawdown": "0.0",
         sharpe: "NaN",
@@ -430,11 +435,11 @@ export const showcase = {
       id: "kmeans",
       name: "KMeans",
       values: {
-        accuracy: "0.548",
+        accuracy: "0.563",
         precision: "0.0",
         recall: "0.0",
         f1: "0.0",
-        "auc-roc": "0.501",
+        "auc-roc": "0.547",
         "total-return": "0.0",
         "max-drawdown": "0.0",
         sharpe: "NaN",
@@ -444,11 +449,11 @@ export const showcase = {
       id: "som",
       name: "SOM",
       values: {
-        accuracy: "0.548",
+        accuracy: "0.563",
         precision: "0.0",
         recall: "0.0",
         f1: "0.0",
-        "auc-roc": "0.524",
+        "auc-roc": "0.529",
         "total-return": "0.0",
         "max-drawdown": "0.0",
         sharpe: "NaN",
@@ -463,9 +468,53 @@ export const showcase = {
         recall: "—",
         f1: "—",
         "auc-roc": "—",
-        "total-return": "0.347",
-        "max-drawdown": "-0.189",
-        sharpe: "0.866",
+        "total-return": "0.229",
+        "max-drawdown": "-0.084",
+        sharpe: "1.711",
+      },
+    },
+  ],
+  denseModels: [
+    {
+      id: "manual-dense",
+      name: "Manual",
+      values: {
+        accuracy: "0.563",
+        precision: "0.0",
+        recall: "0.0",
+        f1: "0.0",
+        "auc-roc": "0.543",
+        "total-return": "0.0",
+        "max-drawdown": "0.0",
+        sharpe: "NaN",
+      },
+    },
+    {
+      id: "kmeans-dense",
+      name: "KMeans",
+      values: {
+        accuracy: "0.563",
+        precision: "0.0",
+        recall: "0.0",
+        f1: "0.0",
+        "auc-roc": "0.547",
+        "total-return": "0.0",
+        "max-drawdown": "0.0",
+        sharpe: "NaN",
+      },
+    },
+    {
+      id: "som-dense",
+      name: "SOM",
+      values: {
+        accuracy: "0.563",
+        precision: "0.0",
+        recall: "0.0",
+        f1: "0.0",
+        "auc-roc": "0.531",
+        "total-return": "0.0",
+        "max-drawdown": "0.0",
+        sharpe: "NaN",
       },
     },
   ],

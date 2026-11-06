@@ -105,19 +105,22 @@ if (!index.includes("/moe-lstm/docs/")) {
 }
 const homeNeedles = [
   "2026-11-06",
-  "^GSPC",
-  "2254a46",
-  "2de4f96",
-  "0.548",
-  "0.528",
-  "0.501",
-  "0.524",
-  "0.347",
-  "-0.189",
-  "0.866",
+  "SPY",
+  "5cf5003",
+  "0.563",
+  "0.539",
+  "0.547",
+  "0.529",
+  "0.543",
+  "0.531",
+  "0.229",
+  "-0.084",
+  "1.711",
   "NaN",
+  "MOE_TOP_K=dense",
   "data-chart=\"equity\"",
   "data-value=\"run\"",
+  "data-gate=\"dense\"",
   "/moe-lstm/results/equity-card.png",
   "/moe-lstm/results/confusion.png",
   "/moe-lstm/results/run.json",
@@ -129,7 +132,15 @@ if (missingHome.length > 0) {
   console.error("check-dist: home page is missing:\n" + missingHome.map((item) => `  - ${item}`).join("\n"));
   process.exit(1);
 }
-const staleHome = ["data-value=\"empty\"", "这些格子是占位", "The page has no stored run.", "格子空着"];
+const staleHome = [
+  "data-value=\"empty\"",
+  "这些格子是占位",
+  "The page has no stored run.",
+  "格子空着",
+  "^GSPC",
+  "0.548",
+  "2254a46",
+];
 const staleHit = staleHome.filter((needle) => index.includes(needle));
 if (staleHit.length > 0) {
   console.error("check-dist: home page still has empty-cell copy:\n" + staleHit.map((item) => `  - ${item}`).join("\n"));

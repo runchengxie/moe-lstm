@@ -119,6 +119,37 @@ const docsLink = L("文档", "Docs");
             </tbody>
           </table>
         </div>
+        <h3><Tx text={showcase.denseHeading} /></h3>
+        <div class="table-wrap">
+          <table>
+            <caption><Tx text={showcase.denseCaption} /></caption>
+            <thead>
+              <tr>
+                <th scope="col"><Tx text={showcase.modelHeading} /></th>
+                {showcase.columns.map((column) => <th scope="col">{column.label}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {
+                showcase.denseModels.map((model) => (
+                  <tr>
+                    <th scope="row">{model.name}</th>
+                    {showcase.columns.map((column) => (
+                      <td
+                        data-model={model.id}
+                        data-metric={column.key}
+                        data-gate="dense"
+                        data-value="run"
+                      >
+                        {model.values[column.key]}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
         <p><Tx text={showcase.runMeta} /></p>
         <p>
           <Tx text={showcase.filesLabel} />
@@ -126,7 +157,11 @@ const docsLink = L("文档", "Docs");
           {" · "}
           <a href={`${base}results/metrics.txt`}>metrics.txt</a>
           {" · "}
+          <a href={`${base}results/metrics-dense.txt`}>metrics-dense.txt</a>
+          {" · "}
           <a href={`${base}results/oos_probabilities.csv`}>oos_probabilities.csv</a>
+          {" · "}
+          <a href={`${base}results/oos_probabilities_dense.csv`}>oos_probabilities_dense.csv</a>
           {" · "}
           <a href={`${base}results/equity.png`}>equity.png</a>
         </p>
