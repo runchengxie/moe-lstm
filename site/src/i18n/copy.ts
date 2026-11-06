@@ -15,6 +15,21 @@ export const links = {
   pr5: "https://github.com/runchengxie/moe-lstm/pull/5",
   pr6: "https://github.com/runchengxie/moe-lstm/pull/6",
   pr7: "https://github.com/runchengxie/moe-lstm/pull/7",
+  pr8: "https://github.com/runchengxie/moe-lstm/pull/8",
+  pr9: "https://github.com/runchengxie/moe-lstm/pull/9",
+  pr10: "https://github.com/runchengxie/moe-lstm/pull/10",
+  pr11: "https://github.com/runchengxie/moe-lstm/pull/11",
+  pr12: "https://github.com/runchengxie/moe-lstm/pull/12",
+  pr13: "https://github.com/runchengxie/moe-lstm/pull/13",
+  pr14: "https://github.com/runchengxie/moe-lstm/pull/14",
+  pr15: "https://github.com/runchengxie/moe-lstm/pull/15",
+  pr16: "https://github.com/runchengxie/moe-lstm/pull/16",
+  pr17: "https://github.com/runchengxie/moe-lstm/pull/17",
+  pr18: "https://github.com/runchengxie/moe-lstm/pull/18",
+  pr19: "https://github.com/runchengxie/moe-lstm/pull/19",
+  pr20: "https://github.com/runchengxie/moe-lstm/pull/20",
+  pr21: "https://github.com/runchengxie/moe-lstm/pull/21",
+  pr22: "https://github.com/runchengxie/moe-lstm/pull/22",
   engine: "https://github.com/runchengxie/quant-backtest-engine",
   pages: "https://runchengxie.github.io/moe-lstm/",
   defaultCsv:
@@ -41,6 +56,7 @@ export const ui = {
 };
 
 const merged = L("已合并", "Merged");
+const closed = L("已关闭", "Closed");
 
 export const copy = {
   meta: {
@@ -68,8 +84,8 @@ export const copy = {
       },
     ],
     asOf: L(
-      "写于 2026-11-06（Asia/Shanghai）。数字来自代码 `5cf5003`。标的是 SPY 日线，2020-01-13 到 2025-01-10，共 1257 根。这是仓库外准备的公开 CSV。原文件日期是 ISO，脚本只认 `%m/%d/%Y`，所以运行前只改了日期，价格没动。原 CSV 不在 git 里。稀疏和稠密各跑了 21 秒。",
-      "Written 2026-11-06 (Asia/Shanghai). The figures come from code `5cf5003`. The series is SPY daily, 13 Jan 2020 to 10 Jan 2025, 1,257 bars. It is a public CSV prepared outside the repository. The source dates are ISO. The loader accepts only `%m/%d/%Y`, so the run rewrote the dates and left the prices unchanged. The raw CSV is not in git. Sparse and dense each took 21 seconds.",
+      "写于 2026-11-06（Asia/Shanghai），对应 main 的 `3f02207`（#22 的 squash）。数字来自代码 `5cf5003`。标的是 SPY 日线，2020-01-13 到 2025-01-10，共 1257 根。这是仓库外准备的公开 CSV。原文件日期是 ISO，脚本只认 `%m/%d/%Y`，所以运行前只改了日期，价格没动。原 CSV 不在 git 里。稀疏 top-1 是主表。稠密 softmax 是对照。两次各跑了 21 秒。",
+      "Written 2026-11-06 (Asia/Shanghai), against main at `3f02207` (the squash of #22). The figures come from code `5cf5003`. The series is SPY daily, 13 Jan 2020 to 10 Jan 2025, 1,257 bars. It is a public CSV prepared outside the repository. The source dates are ISO. The loader accepts only `%m/%d/%Y`, so the run rewrote the dates and left the prices unchanged. The raw CSV is not in git. Sparse top-1 is the featured table. Dense softmax is the comparison. Each run took 21 seconds.",
     ),
   },
   what: {
@@ -79,8 +95,8 @@ export const copy = {
       {
         term: L("标的", "Subject"),
         detail: L(
-          "脚本注释里的问题陈述是标普 500、日频、下一交易日涨跌，并写了 2020-01-13 至 2025-01-10。这段行情不在仓库里。",
-          "The script's problem statement says S&P 500, daily bars, and next-session up or down, and it names the window 13 Jan 2020–10 Jan 2025. That history is not in the repository.",
+          "脚本按指数点位写，看下一交易日涨跌。首页的 SPY 日线是 2020-01-13 到 2025-01-10。稀疏 top-1 是主表。稠密 softmax 是对照。",
+          "The script is written for an index level and the next session's direction. The home-page series is SPY daily, 13 Jan 2020 to 10 Jan 2025. Sparse top-1 is the featured table. Dense softmax is the comparison.",
         ),
       },
       {
@@ -93,7 +109,7 @@ export const copy = {
       {
         term: L("模型", "Model"),
         detail: L(
-          "三个 LSTM（各 64 单元，保留时间维）展平后堆在一起。路由是宽度为 3 的 softmax，只看输入的最后一根。默认 top-1：选中的专家权重为 1，另外两个为 0，再做加权求和。`MOE_TOP_K=dense` 时三个权重都保留。后面接 sigmoid，概率大于 0.5 判为涨。任务损失是 binary crossentropy，优化器是 Adam。稀疏路径另加一项负载均衡辅助损失，系数 0.01。这是 LSTM 专家，不是 Transformer MoE。",
+          "三个 LSTM（各 64 单元，保留时间维）展平后堆在一起。路由是宽度为 3 的 softmax，只看输入的最后一根。默认是 top-1。选中的专家权重为 1，另外两个为 0，再做加权求和。`MOE_TOP_K=dense` 时三个权重都保留。后面接 sigmoid，概率大于 0.5 判为涨。任务损失是 binary crossentropy，优化器是 Adam。稀疏路径另加一项负载均衡辅助损失，系数 0.01。专家是 LSTM。门控只读最后一根。",
           "Three LSTMs (64 units, sequences kept) are flattened and stacked. The router is a width-3 softmax on the last input bar only. The default is top-1: the selected expert has weight 1, the other two have weight 0, and those weights form the sum. `MOE_TOP_K=dense` keeps all three weights. A sigmoid follows. A probability above 0.5 is up. The task loss is binary crossentropy. The optimizer is Adam. The sparse path adds a load-balancing auxiliary term with coefficient 0.01. These are LSTM experts, not a Transformer MoE.",
         ),
       },
@@ -107,7 +123,7 @@ export const copy = {
       {
         term: L("运行时", "Runtime"),
         detail: L(
-          "根 README 写明在 Python 3.12 上核对过。安装用 uv 0.13.7：`uv sync` 读取 `pyproject.toml` 和 `uv.lock`。直接依赖钉到 TensorFlow 2.21.0、Keras 3.15.1、pandas 3.1.1、numpy 2.5.4、scikit-learn 1.9.1、MiniSom 2.3.6、matplotlib 3.11.2、seaborn 0.13.2、pyarrow 26.0.1。`requirements.txt` 已随 #6 删除。smoke 和 unittest 的 CI 使用 `uv sync --frozen`。",
+          "根 README 写明在 Python 3.12 上核对过。安装用 uv 0.13.7。`uv sync` 读取 `pyproject.toml` 和 `uv.lock`。直接依赖钉到 TensorFlow 2.21.0、Keras 3.15.1、pandas 3.1.1、numpy 2.5.4、scikit-learn 1.9.1、MiniSom 2.3.6、matplotlib 3.11.2、seaborn 0.13.2、pyarrow 26.0.1。`requirements.txt` 已随 #6 删除。smoke 和 unittest 的 CI 使用 `uv sync --frozen`。",
           "The root README records a check on Python 3.12. Install with uv 0.13.7: `uv sync` reads `pyproject.toml` and `uv.lock`. Direct pins are TensorFlow 2.21.0, Keras 3.15.1, pandas 3.1.1, numpy 2.5.4, scikit-learn 1.9.1, MiniSom 2.3.6, matplotlib 3.11.2, seaborn 0.13.2, and pyarrow 26.0.1. `requirements.txt` was removed in #6. Smoke and unit CI run `uv sync --frozen`.",
         ),
       },
@@ -126,8 +142,8 @@ export const copy = {
       {
         name: L("OHLCV", "OHLCV"),
         detail: L(
-          "设置了 `MOE_DATA_PARQUET` 时读取 Hive 分钟 Parquet，并聚合成日线；还要设置 `MOE_SYMBOL`。未设置时从 `MOE_DATA_CSV` 读入 `Date`、`Open`、`High`、`Low`、`Close/Last`。CSV 也未设置时用脚本里的默认 URL；该 URL 在 2026-11-05 返回 HTTP 404。",
-          "When `MOE_DATA_PARQUET` is set, the script reads Hive minute Parquet and rolls it up to daily bars, and `MOE_SYMBOL` is required. Otherwise it reads `Date`, `Open`, `High`, `Low`, and `Close/Last` from `MOE_DATA_CSV`. If that is also unset, it uses the default URL in the file. That URL returned HTTP 404 on 2026-11-05.",
+          "设置了 `MOE_DATA_PARQUET` 时读取 Hive 分钟 Parquet，并聚合成日线，还要设置 `MOE_SYMBOL`。未设置时从 `MOE_DATA_CSV` 读入 `Date`、`Open`、`High`、`Low`、`Close/Last`。CSV 也未设置时用脚本里的默认 URL。该 URL 在 2026-11-05 返回 HTTP 404，2026-11-06 再查仍是 404。",
+          "When `MOE_DATA_PARQUET` is set, the script reads Hive minute Parquet and rolls it up to daily bars, and `MOE_SYMBOL` is required. Otherwise it reads `Date`, `Open`, `High`, `Low`, and `Close/Last` from `MOE_DATA_CSV`. If that is also unset, it uses the default URL in the file. That URL returned HTTP 404 on 2026-11-05, and it still did on 2026-11-06.",
         ),
       },
       {
@@ -147,7 +163,7 @@ export const copy = {
       {
         name: L("MoE", "MoE"),
         detail: L(
-          "Manual、KMeans、SOM 三个子集各训练一次同一个结构：三个 LSTM 专家。默认 top-1，没选中的权重是 0。`MOE_TOP_K=dense` 仍把三个 softmax 加在一起。",
+          "Manual、KMeans、SOM 三个子集各训练一次同一个结构。结构是三个 LSTM 专家。默认 top-1，没选中的权重是 0。`MOE_TOP_K=dense` 仍把三个 softmax 加在一起。",
           "Manual, KMeans, and SOM each train the same architecture once: three LSTM experts. The default is top-1, and unselected weights are 0. `MOE_TOP_K=dense` still adds the three softmax weights.",
         ),
       },
@@ -160,7 +176,7 @@ export const copy = {
       },
     ],
     note: L(
-      "一次运行训练三个模型：手工特征、K-Means 子集、SOM 子集。相关热力图只供查看，仍使用全样本。`MPLBACKEND=Agg` 时画出图后关闭，不调用 `plt.show()`。交互式后端仍会调用 `plt.show()`。",
+      "一次运行训练三个模型。它们是手工特征、K-Means 子集、SOM 子集。相关热力图只供查看，仍使用全样本。`MPLBACKEND=Agg` 时画出图后关闭，不调用 `plt.show()`。交互式后端仍会调用 `plt.show()`。",
       "One run fits three models: manual features, the K-Means subset, and the SOM subset. The correlation heatmap is for inspection and still uses the full sample. With `MPLBACKEND=Agg` the script draws the figures and closes them, and does not call `plt.show()`. An interactive backend still calls `plt.show()`.",
     ),
   },
@@ -168,22 +184,22 @@ export const copy = {
     index: "03",
     heading: L("数据", "Data"),
     intro: L(
-      "行情放在仓库外面。主路径是 Hive 分钟 Parquet；未设置时回退到 CSV。价格列要已经是数字：美元符号或千分位会让滚动计算失败。",
+      "行情放在仓库外面。主路径是 Hive 分钟 Parquet。未设置时回退到 CSV。价格列要已经是数字。美元符号或千分位会让滚动计算失败。",
       "Keep prices outside the repository. Hive minute Parquet is the primary path; CSV is the fallback when that root is unset. Price columns must already be numbers. A dollar sign or thousands separator breaks the rolling calculations.",
     ),
     env: [
       {
         name: "MOE_DATA_PARQUET",
         detail: L(
-          "已在 main（#4）。Hive 分钟 Parquet 根目录。需要同时设置 `MOE_SYMBOL`；一个代码有多份 security 时再设置 `MOE_SECURITY`。设置之后优先于 `MOE_DATA_CSV`。分钟线聚合成脚本已有的日线列。不设置时仍走 CSV。",
+          "已在 main（#4）。Hive 分钟 Parquet 根目录。需要同时设置 `MOE_SYMBOL`。一个代码有多份 security 时再设置 `MOE_SECURITY`。设置之后优先于 `MOE_DATA_CSV`。分钟线聚合成脚本已有的日线列。不设置时仍走 CSV。",
           "On main since #4. Hive minute-Parquet root. Set `MOE_SYMBOL` with it, and `MOE_SECURITY` when one ticker has more than one security hash. When set, it wins over `MOE_DATA_CSV`. Minutes are rolled up to the daily columns the script already uses. Unset, the script still reads CSV.",
         ),
       },
       {
         name: "MOE_DATA_CSV",
         detail: L(
-          "Parquet 根目录未设置时的日频 CSV，可以是本地路径或 `pandas.read_csv` 能打开的 URL。这一项和 Parquet 都未设置时，脚本请求下面的默认 URL。撰写 README 时该 URL 返回 HTTP 404（`quant_practice_3` 已不在）。",
-          "Daily CSV used when the Parquet root is unset. A local path or any URL `pandas.read_csv` can open. If this and the Parquet root are both unset, the script requests the default URL below. When the README was written that URL returned HTTP 404 (`quant_practice_3` is gone).",
+          "Parquet 根目录未设置时的日频 CSV，可以是本地路径或 `pandas.read_csv` 能打开的 URL。这一项和 Parquet 都未设置时，脚本请求下面的默认 URL。2026-11-05 该 URL 返回 HTTP 404，2026-11-06 再查仍是 404。`quant_practice_3` 里已经没有这个文件。",
+          "Daily CSV used when the Parquet root is unset. A local path or any URL `pandas.read_csv` can open. If this and the Parquet root are both unset, the script requests the default URL below. That URL returned HTTP 404 on 2026-11-05, and it still did on 2026-11-06 (`quant_practice_3` is gone).",
         ),
       },
     ],
@@ -227,16 +243,16 @@ export const copy = {
       "`docs/data.md` says AlgoSeek US equity bars use other column names. Map them onto these five columns in a separate file. Hive minute Parquet is another path already on main. The loader rolls minute fields up to these daily columns. When the Parquet root is empty, the script reads CSV.",
     ),
     defaultUrl: L(
-      "默认 CSV URL，撰写 README 时返回 HTTP 404：",
-      "Default CSV URL, HTTP 404 when the README was written:",
+      "默认 CSV URL 在 2026-11-05 返回 HTTP 404，2026-11-06 再查仍是 404。",
+      "Default CSV URL. It returned HTTP 404 on 2026-11-05, and it still did on 2026-11-06.",
     ),
   },
   merged: {
     index: "04",
     heading: L("已在 main", "On main"),
     intro: L(
-      "按编号列出。已合并的都是 squash 进 main。远程分支只有 `main`。这批没有仍开着的 pull request。标题是 GitHub 上的英文原题。",
-      "Listed by number. Merged items were squash-merged into main. The only remote branch is `main`. No pull request from this batch is still open. Titles are the English titles on GitHub.",
+      "按编号列到 #22。已合并的都是 squash 进 main。标题是 GitHub 上的英文原题。",
+      "Listed by number through #22. Merged items were squash-merged into main. Titles are the English titles on GitHub.",
     ),
     items: [
       {
@@ -246,7 +262,7 @@ export const copy = {
         state: merged,
         base: L("squash `0309d55`", "squash `0309d55`"),
         body: L(
-          "运维健康：让本地 CSV 能够启动训练。",
+          "让本地 CSV 能够启动训练。",
           "Ops health: a local CSV can start training.",
         ),
       },
@@ -290,7 +306,7 @@ export const copy = {
         state: L("已关闭", "Closed"),
         base: L("未合并", "Not merged"),
         body: L(
-          "已关闭，视为被取代。准确的中英文档随 #3 进入 main。根 README 顶部的语言切换随 #6 进入 main。",
+          "已关闭。准确的中英文档随 #3 进入 main。根 README 顶部的语言切换随 #6 进入 main。",
           "Closed as superseded. The accurate bilingual docs landed with #3. The language switcher on the root READMEs landed with #6.",
         ),
       },
@@ -301,8 +317,8 @@ export const copy = {
         state: merged,
         base: L("squash `7b8f839`", "squash `7b8f839`"),
         body: L(
-          "安装从 pip 换成 uv：`pyproject.toml` 加 `uv.lock`，`requirements.txt` 删除。运行是 `uv sync` 和 `uv run python moe_lstm.py`。smoke 与 unittest 的 CI 使用 `uv sync --frozen`。根 README 的语言切换也在这份里。",
-          "Switches installs from pip to uv: `pyproject.toml` plus `uv.lock`, and `requirements.txt` removed. Run with `uv sync` and `uv run python moe_lstm.py`. Smoke and unit CI use `uv sync --frozen`. The language switcher on the root READMEs is in this change.",
+          "安装从 pip 换成 uv。`pyproject.toml` 加上 `uv.lock`，`requirements.txt` 删除。当时的命令是 `uv run python moe_lstm.py`。现在的命令是 `uv run moe-lstm`，见 #17。smoke 与 unittest 的 CI 使用 `uv sync --frozen`。根 README 的语言切换也在这份里。",
+          "Switches installs from pip to uv. `pyproject.toml` plus `uv.lock`, and `requirements.txt` removed. The command in that change was `uv run python moe_lstm.py`. The current command is `uv run moe-lstm`, from #17. Smoke and unit CI use `uv sync --frozen`. The language switcher on the root READMEs is in this change.",
         ),
       },
       {
@@ -312,22 +328,187 @@ export const copy = {
         state: merged,
         base: L("squash `37671ab`", "squash `37671ab`"),
         body: L(
-          "`site/` 下的这份 Astro 简报，以及 GitHub Pages 工作流。地址就是本页。",
-          "This Astro brief under `site/`, and the GitHub Pages workflow. This page is that site.",
+          "`site/` 下的这份 Astro 简报，以及 GitHub Pages 工作流。站点已经发布。",
+          "This Astro brief under `site/`, and the GitHub Pages workflow. The site is published.",
+        ),
+      },
+      {
+        n: "#8",
+        href: links.pr8,
+        title: "Simplify the root READMEs and move technical detail into docs",
+        state: merged,
+        base: L("squash `3350aeb`", "squash `3350aeb`"),
+        body: L(
+          "根 README 收短，技术细节挪进 `docs/`。",
+          "Shortens the root READMEs and moves the technical detail into `docs/`.",
+        ),
+      },
+      {
+        n: "#9",
+        href: links.pr9,
+        title: "Update the site brief to match merged main",
+        state: merged,
+        base: L("squash `fa82ee7`", "squash `fa82ee7`"),
+        body: L(
+          "站点简报改到当时的 main。",
+          "Updates the site brief to the main of that day.",
+        ),
+      },
+      {
+        n: "#10",
+        href: links.pr10,
+        title: "Make the site home a backtest placeholder and architecture view",
+        state: merged,
+        base: L("squash `d38c878`", "squash `d38c878`"),
+        body: L(
+          "首页当时是回测占位和模型结构。发布的数字是 #22 的 SPY 运行。",
+          "The home page was a backtest placeholder and the model layout. The published figures are the SPY run from #22.",
+        ),
+      },
+      {
+        n: "#11",
+        href: links.pr11,
+        title: "Point the project site at the moe-lstm Pages path",
+        state: merged,
+        base: L("squash `07a6b8d`", "squash `07a6b8d`"),
+        body: L(
+          "站点地址改到 `/moe-lstm/`。",
+          "Points the project site at the `/moe-lstm/` Pages path.",
+        ),
+      },
+      {
+        n: "#12",
+        href: links.pr12,
+        title: "Split the study script into the moe_lstm package",
+        state: closed,
+        base: L("未合并", "Not merged"),
+        body: L(
+          "已关闭。同一件事在 #17 合并。",
+          "Closed. The same work merged as #17.",
+        ),
+      },
+      {
+        n: "#13",
+        href: links.pr13,
+        title: "Send study signals through quant-backtest-engine",
+        state: closed,
+        base: L("未合并", "Not merged"),
+        body: L(
+          "已关闭。同一件事在 #18 合并。",
+          "Closed. The same work merged as #18.",
+        ),
+      },
+      {
+        n: "#14",
+        href: links.pr14,
+        title: "Correct drawdown and the flat label",
+        state: closed,
+        base: L("未合并", "Not merged"),
+        body: L(
+          "已关闭。同一件事在 #16 合并。",
+          "Closed. The same work merged as #16.",
+        ),
+      },
+      {
+        n: "#15",
+        href: links.pr15,
+        title: "Rewrite the site and docs in plain sentences",
+        state: closed,
+        base: L("未合并", "Not merged"),
+        body: L(
+          "已关闭。站点文案的改写在 #19 合并。",
+          "Closed. The site-copy rewrite merged as #19.",
+        ),
+      },
+      {
+        n: "#16",
+        href: links.pr16,
+        title: "Correct drawdown, flat labels, and save OOS probabilities",
+        state: merged,
+        base: L("squash `dff5e28`", "squash `dff5e28`"),
+        body: L(
+          "修正最大回撤和空仓标签。测试段的日期和概率写入 `oos_probabilities.csv`。",
+          "Corrects max drawdown and the flat label. Test dates and probabilities are written to `oos_probabilities.csv`.",
+        ),
+      },
+      {
+        n: "#17",
+        href: links.pr17,
+        title: "Split the corrected script into the moe_lstm package",
+        state: merged,
+        base: L("squash `db7c746`", "squash `db7c746`"),
+        body: L(
+          "根目录脚本拆进 `src/moe_lstm/`。命令是 `uv run moe-lstm`。",
+          "Splits the root script into `src/moe_lstm/`. The command is `uv run moe-lstm`.",
+        ),
+      },
+      {
+        n: "#18",
+        href: links.pr18,
+        title: "Send study signals through quant-backtest-engine",
+        state: merged,
+        base: L("squash `db5c6a5`", "squash `db5c6a5`"),
+        body: L(
+          "信号从 `moe_lstm.signals` 出去。成交和账本走 quant-backtest-engine 的 `size` 和 `run_sessions`。",
+          "Signals leave through `moe_lstm.signals`. Fills and the ledger go through quant-backtest-engine `size` and `run_sessions`.",
+        ),
+      },
+      {
+        n: "#19",
+        href: links.pr19,
+        title: "Rewrite the visible site copy in plain sentences",
+        state: merged,
+        base: L("squash `b728d3c`", "squash `b728d3c`"),
+        body: L(
+          "可见的站点文案改成短句。",
+          "Rewrites the visible site copy into short sentences.",
+        ),
+      },
+      {
+        n: "#20",
+        href: links.pr20,
+        title: "Add a sparse top-k gate beside the dense LSTM mixture",
+        state: merged,
+        base: L("squash `2254a46`", "squash `2254a46`"),
+        body: L(
+          "默认门控是稀疏 top-1。选中的专家权重为 1，另外两个为 0。`MOE_TOP_K=dense` 保留三个专家的 softmax。",
+          "The default gate is sparse top-1. The selected expert has weight 1 and the other two have weight 0. `MOE_TOP_K=dense` keeps the softmax over all three.",
+        ),
+      },
+      {
+        n: "#21",
+        href: links.pr21,
+        title: "Publish the ^GSPC study run on the project site",
+        state: merged,
+        base: L("squash `5cf5003`", "squash `5cf5003`"),
+        body: L(
+          "首页记下 2026-11-06 的 ^GSPC 日线运行。三个模型都空仓。#22 把首页换成 SPY。",
+          "Publishes the 2026-11-06 ^GSPC daily run on the home page. All three models stayed flat. #22 replaces that home page with SPY.",
+        ),
+      },
+      {
+        n: "#22",
+        href: links.pr22,
+        title: "Publish the SPY 2020-2025 study run",
+        state: merged,
+        base: L("squash `3f02207`", "squash `3f02207`"),
+        body: L(
+          "首页是 SPY 日线，2020-01-13 到 2025-01-10，共 1257 根。稀疏 top-1 是主表。稠密 softmax 是对照。三个模型的硬预测都是空仓。",
+          "The home page is SPY daily bars, 13 Jan 2020 to 10 Jan 2025, 1,257 sessions. Sparse top-1 is the featured table. Dense softmax is the comparison. Every hard prediction is flat.",
         ),
       },
     ],
     note: L(
-      "包和引擎适配器都在仓库里。首页记下了 2026-11-06 的 SPY 运行。",
-      "The package and the engine adapter are in the repository. The home page records the 2026-11-06 SPY run.",
+      "main 现在在 `3f02207`（#22）。包和引擎适配器都在仓库里。首页记下了 2026-11-06 的 SPY 运行。稀疏 top-1 是主表。稠密是对照。",
+      "main is at `3f02207` (#22). The package and the engine adapter are in the repository. The home page records the 2026-11-06 SPY run. Sparse top-1 is the featured table. Dense is the comparison.",
     ),
   },
   next: {
     index: "05",
-    heading: L("还没做", "Not done yet"),
+    heading: L("包和引擎", "Package and engine"),
     intro: L(
-      "包打出信号。引擎记下成交和账本。首页的格子是研究脚本自己的回测，不是引擎账本。",
-      "The package emits signals. The engine records fills and the ledger. The cells on the home page are the study script's own backtest, not the engine ledger.",
+      "包打出信号。引擎记下成交和账本。首页格子是研究脚本自己的回测。引擎账本留在引擎那边。",
+      "The package emits signals. The engine records fills and the ledger. The cells on the home page are the study script's own backtest. The engine ledger stays with the engine.",
     ),
     items: [
       {
@@ -340,7 +521,7 @@ export const copy = {
       {
         term: L("quant-backtest-engine", "quant-backtest-engine"),
         detail: L(
-          "信号从 `moe_lstm.signals` 出去。成交和账本走 `size` 和 `run_sessions`。示例是 `examples/engine_backtest.py`。这一页不印它的输出。",
+          "信号从 `moe_lstm.signals` 出去。成交和账本走 `size` 和 `run_sessions`。示例是 `examples/engine_backtest.py`。首页留下研究脚本的回测。",
           "Signals leave through `moe_lstm.signals`. Fills and the ledger go through `size` and `run_sessions`. The example is `examples/engine_backtest.py`. This page leaves that output off.",
         ),
         href: links.engine,
@@ -363,16 +544,16 @@ export const copy = {
         href: links.engine,
         label: L("quant-backtest-engine", "quant-backtest-engine"),
         note: L(
-          "计划中的回测库，还没有接上。模型将输出信号或权重，由它处理成交和账本。本仓库的依赖在 `pyproject.toml` 和 `uv.lock`。",
-          "The planned backtest library. It is not wired up. The model would emit signals or weights; it would handle fills and the ledger. This repository's dependencies are in `pyproject.toml` and `uv.lock`.",
+          "回测库已接上。信号从 `moe_lstm.signals` 出去，成交和账本走 `size` 和 `run_sessions`。本仓库的依赖在 `pyproject.toml` 和 `uv.lock`。",
+          "The backtest library is wired up. Signals leave through `moe_lstm.signals`. Fills and the ledger go through `size` and `run_sessions`. This repository's dependencies are in `pyproject.toml` and `uv.lock`.",
         ),
       },
       {
         href: links.pages,
         label: L("GitHub Pages", "GitHub Pages"),
         note: L(
-          "本页。站点和工作流已随 #7 进入 main。",
-          "This page. The site and the workflow landed on main with #7.",
+          "站点已经发布。工作流随 #7 进入 main。首页的 SPY 运行随 #22 进入 main。",
+          "The site is published. The workflow landed on main with #7. The SPY run on the home page landed with #22.",
         ),
       },
     ],
@@ -414,7 +595,7 @@ export const showcase = {
     "同一次数据上的 `MOE_TOP_K=dense`。硬预测也全是空仓，所以收益、回撤和夏普与上面相同。AUC 不同。",
     "The same data with `MOE_TOP_K=dense`. The hard predictions are also all flat, so return, drawdown, and Sharpe match the table above. AUC does not.",
   ),
-  filesLabel: L("这次运行的文件：", "Files from this run: "),
+  filesLabel: L("这次运行的文件。", "Files from this run: "),
   modelHeading: L("模型", "Model"),
   models: [
     {
@@ -552,13 +733,13 @@ export const architecture = {
     { n: "4", k: L("输出", "Output"), v: L("加权求和后过 sigmoid", "Weighted sum, then a sigmoid") },
   ],
   sparseNote: L(
-    "没被选中的专家不进入求和，权重是 0。`MOE_TOP_K=dense` 时三个 softmax 权重都留下。专家是 LSTM，不是 Transformer 里按 token 分发的 MoE。",
+    "没选中的专家权重是 0，不进入求和。`MOE_TOP_K=dense` 时三个 softmax 权重都留下。专家是 LSTM。门控只读最后一根。",
     "An expert that is not selected stays out of the sum, at weight 0. `MOE_TOP_K=dense` keeps all three softmax weights. The experts are LSTMs, not a token-wise Transformer MoE.",
   ),
   dataHeading: L("数据路径", "Data path"),
   data: L(
-    "设置 `MOE_DATA_PARQUET` 时，Hive 分钟线是主输入，并要有 `MOE_SYMBOL`；同一代码有多份 security 时再设 `MOE_SECURITY`。分钟线收成日线。未设置 Parquet 根目录时回退到 `MOE_DATA_CSV`。仓库里没有行情。脚本自带的远程 CSV 在 2026-11-05 返回 HTTP 404，所以 CSV 需要本地路径。",
-    "When `MOE_DATA_PARQUET` is set, Hive minute bars are the primary input, together with `MOE_SYMBOL`, and `MOE_SECURITY` when one ticker has more than one security hash. Minutes roll up to daily bars. `MOE_DATA_CSV` is the fallback when that Parquet root is unset. The repository has no market data. The default remote CSV returned HTTP 404 on 2026-11-05, so a CSV run needs a local path.",
+    "设置 `MOE_DATA_PARQUET` 时，Hive 分钟线是主输入，并要有 `MOE_SYMBOL`。同一代码有多份 security 时再设 `MOE_SECURITY`。分钟线收成日线。未设置 Parquet 根目录时回退到 `MOE_DATA_CSV`。仓库里没有行情。脚本自带的远程 CSV 在 2026-11-05 返回 HTTP 404，2026-11-06 再查仍是 404，所以 CSV 需要本地路径。",
+    "When `MOE_DATA_PARQUET` is set, Hive minute bars are the primary input, together with `MOE_SYMBOL`, and `MOE_SECURITY` when one ticker has more than one security hash. Minutes roll up to daily bars. `MOE_DATA_CSV` is the fallback when that Parquet root is unset. The repository has no market data. The default remote CSV returned HTTP 404 on 2026-11-05, and it still did on 2026-11-06, so a CSV run needs a local path.",
   ),
   splitHeading: L("窗口、切分和缩放", "Windows, split, and scaling"),
   split: L(

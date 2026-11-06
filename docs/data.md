@@ -17,7 +17,7 @@ There is no argument parser.
 | `MOE_SECURITY` | Set when that ticker has more than one `security=` hash. If there is only one hash, it is selected for you. |
 | `MOE_DATA_CSV` | Local path or any URL `pandas.read_csv` can open. Used when `MOE_DATA_PARQUET` is unset. When this is also unset, the script reads `DEFAULT_DATA_URL`. |
 
-The default URL is `runchengxie/quant_practice_3` `historical_data.csv`. On 2026-11-05 that URL returned HTTP 404, so point the script at a local file for CSV.
+The default URL is `runchengxie/quant_practice_3` `historical_data.csv`. On 2026-11-05 that URL returned HTTP 404, and it still did on 2026-11-06, so point the script at a local file for CSV.
 
 ## Parquet minute bars
 

@@ -45,7 +45,7 @@ marked.use({
 
 function stripLangSwitch(markdown: string): string {
   return markdown.replace(
-    /^(?:\*\*English\*\* \| \[简体中文\]\([^)]+\)|\[English\]\([^)]+\) \| \*\*简体中文\*\*)\r?\n+/,
+    /^(?:(?:\*\*)?English(?:\*\*)? \| \[(?:\*\*)?简体中文(?:\*\*)?\]\([^)]+\)|\[English\]\([^)]+\) \| (?:\*\*)?简体中文(?:\*\*)?)\r?\n+/,
     "",
   );
 }

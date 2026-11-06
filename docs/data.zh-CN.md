@@ -1,4 +1,4 @@
-[English](data.md) | **简体中文**
+[English](data.md) | 简体中文
 
 # 数据
 
@@ -19,11 +19,11 @@
 | `MOE_SECURITY` | 同一个 ticker 有多个 `security=` 哈希时再设置。只有一个哈希时会自动选中。 |
 | `MOE_DATA_CSV` | 本地路径，或 `pandas.read_csv` 能打开的 URL。只在未设置 `MOE_DATA_PARQUET` 时使用。这个也未设置时，脚本读取 `DEFAULT_DATA_URL`。 |
 
-默认地址是 `runchengxie/quant_practice_3` 的 `historical_data.csv`。2026-11-05 访问该地址返回 HTTP 404，所以用 CSV 时要指向本地文件。
+默认地址是 `runchengxie/quant_practice_3` 的 `historical_data.csv`。2026-11-05 访问该地址返回 HTTP 404，2026-11-06 再查仍是 404。用 CSV 时要指向本地文件。
 
 ## Parquet 分钟线
 
-把 `MOE_DATA_PARQUET` 设为处理后的美股逐笔报价分钟线数据集根目录，目录形如：
+把 `MOE_DATA_PARQUET` 设为处理后的美股逐笔报价分钟线数据集根目录，目录形如下面这样。
 
 ```text
 parquet/symbol=SYMBOL/security=HASH/year=YYYY/data.parquet
@@ -49,7 +49,7 @@ export MPLBACKEND=Agg
 uv run moe-lstm
 ```
 
-`MOE_DATA_PARQUET` 也可以直接指向 `parquet/` 目录。真实行情不放进本仓库。设置了 `MOE_DATA_PARQUET` 时，它优先于 `MOE_DATA_CSV`。
+`MOE_DATA_PARQUET` 也可以直接指向 `parquet/` 目录。
 
 ```bash
 uv run python -m unittest tests.test_hive_daily_bars
@@ -71,7 +71,7 @@ uv run python -m unittest tests.test_hive_daily_bars
 
 价格必须已经是数字。带 `$` 或千分位分隔符会被拒绝。随后脚本丢掉 20 日滚动指标填不满的前导行，并丢掉最后一行，因为下一根收盘未知。文件至少要有 28 根 K 线，拟合、验证和测试窗口才能同时非空。
 
-交易日 `t` 的标签：从 `t` 到 `t+1` 的收盘收益率高于 `0.2%`（`THRESHOLD = 0.002`）时为 `1`，否则为 `0`。恰好等于 `0.2%` 时为 `0`。切分和回测里怎么用这个标签，写在 [训练和回测](training.zh-CN.md)。
+交易日 `t` 的标签看从 `t` 到 `t+1` 的收盘收益率。高于 `0.2%`（`THRESHOLD = 0.002`）时为 `1`，否则为 `0`。恰好等于 `0.2%` 时为 `0`。切分和回测里怎么用这个标签，写在 [训练和回测](training.zh-CN.md)。
 
 AlgoSeek 美股 bar 用另一套列名。在单独的文件里，把每个交易日写成这五列，日期用 `%m/%d/%Y`。交易日写成 `Date`，开、高、低、收写成 `Open`、`High`、`Low`、`Close/Last`。脚本留下供应商原来的列名。
 

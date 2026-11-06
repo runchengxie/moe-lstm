@@ -1,4 +1,4 @@
-[English](setup.md) | **简体中文**
+[English](setup.md) | 简体中文
 
 # 环境
 
@@ -6,7 +6,7 @@
 
 [项目说明](../README.zh-CN.md) · [数据](data.zh-CN.md) · [训练和回测](training.zh-CN.md) · [CI 和项目站点](ci.zh-CN.md)
 
-在 Python 3.12 上核对过。先安装 [uv](https://docs.astral.sh/uv/) 0.13.7，然后在本目录执行：
+在 Python 3.12 上核对过。先安装 [uv](https://docs.astral.sh/uv/) 0.13.7，然后在本目录执行。
 
 ```bash
 uv sync
@@ -14,7 +14,7 @@ uv sync
 
 `uv sync` 会创建 `.venv`，安装锁定的依赖，并安装本项目。导入名是 `moe_lstm`，目录是 `src/moe_lstm/`。控制台命令是 `moe-lstm`。`python -m moe_lstm` 跑同一次研究。`pyproject.toml` 锁定直接依赖。`uv.lock` 锁定完整解析结果。`.python-version` 指定 Python 3.12，本机没有该版本时 uv 会安装它。
 
-直接依赖是 2026-11-05 在 Python 3.12 上能干净安装的那一组，再加上 Hive 加载用的 pyarrow 26.0.1：
+直接依赖是 2026-11-05 在 Python 3.12 上能干净安装的那一组，再加上 Hive 加载用的 pyarrow 26.0.1。
 
 | 包 | 版本 |
 | --- | --- |
@@ -40,7 +40,7 @@ uv run python -m unittest discover -s tests -t . -v
 
 加载、标签、切分和回测不会导入 TensorFlow。安装了 TensorFlow 时，`tests/test_model.py` 会构建混合专家并执行 `main(epochs=1)`。未安装时这些测试跳过。
 
-Hive 聚合检查不需要 TensorFlow：
+Hive 聚合检查不需要 TensorFlow。
 
 ```bash
 uv run python -m unittest tests.test_hive_daily_bars

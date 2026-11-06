@@ -1,4 +1,4 @@
-[English](training.md) | **简体中文**
+[English](training.md) | 简体中文
 
 # 训练和回测
 
@@ -12,21 +12,21 @@
 
 使用 Agg 后端时，脚本把图画出后关闭，不调用 `plt.show()`，因此不会出现无显示画布警告。只有交互式后端才会调用 `plt.show()`。
 
-一次运行训练三个模型：手工特征、K-Means 子集、SOM 子集。每个模型的批大小是 16，早停耐心为 5。`MOE_EPOCHS` 用来改 epoch 数。未设置时每个模型训练 50 个 epoch。批大小和耐心不变。任务损失是 binary crossentropy。门控写在下一节。在较小的 CPU 上，50 个 epoch 通常要几分钟。特征选择的随机种子是固定的，LSTM 训练不能逐位复现。在 Python 里调用 `moe_lstm.main(epochs=1)` 是同一种覆盖。显式传入的参数优先于 `MOE_EPOCHS`。
+一次运行训练三个模型。它们是手工特征、K-Means 子集、SOM 子集。每个模型的批大小是 16，早停耐心为 5。`MOE_EPOCHS` 用来改 epoch 数。未设置时每个模型训练 50 个 epoch。批大小和耐心不变。任务损失是 binary crossentropy。门控写在下一节。在较小的 CPU 上，50 个 epoch 通常要几分钟。特征选择的随机种子是固定的，LSTM 训练不能逐位复现。在 Python 里调用 `moe_lstm.main(epochs=1)` 是同一种覆盖。显式传入的参数优先于 `MOE_EPOCHS`。
 
 ## 门控
 
-每个模型有三个 LSTM 专家。第 `i` 个专家是 `LSTM(64, return_sequences=True)`，名字是 `LSTM_Expert_i`，然后展平。三个专家读同一段窗口，差别来自初始化和学到的路由。它们不是 Transformer 块。路由也不在窗口内部按 token 分发。它只读一个向量，也就是最后一根。
+每个模型有三个 LSTM 专家。第 `i` 个专家是 `LSTM(64, return_sequences=True)`，名字是 `LSTM_Expert_i`，然后展平。三个专家读同一段窗口，差别来自初始化和学到的路由。专家是 LSTM。门控只读最后一根。
 
 路由是名为 `Gating_Network` 的 dense softmax，宽度是专家个数 3。
 
 研究脚本的默认门控是稀疏 top-1（`TOP_K = 1`）。选中的专家留下，另外两个权重正好是 0。留下的路由概率会重新归一，使它们的和为 1。top-1 时这个权重就是 1。加权求和用的是这些权重。然后 sigmoid 把和映射成概率，阈值仍是 0.5。
 
-`MOE_TOP_K` 用来改保留的个数。`2` 留两个专家，并把这两个路由概率重新归一。`dense`、`all` 或 `none` 保留全部 softmax 权重。在 Python 里，`build_moe_model(..., top_k=None)` 是稠密路径，`top_k=2` 是留两个专家。`train_and_predict_moe(..., top_k=None)` 对其中一次训练做同样的选择。显式传入的参数优先于 `MOE_TOP_K`。`top_k` 只能是 1 或 2。其他值会报错。这仍是 LSTM 混合专家，不是稀疏 Transformer MoE。
+`MOE_TOP_K` 用来改保留的个数。`2` 留两个专家，并把这两个路由概率重新归一。`dense`、`all` 或 `none` 保留全部 softmax 权重。在 Python 里，`build_moe_model(..., top_k=None)` 是稠密路径，`top_k=2` 是留两个专家。`train_and_predict_moe(..., top_k=None)` 对其中一次训练做同样的选择。显式传入的参数优先于 `MOE_TOP_K`。`top_k` 只能是 1 或 2。其他值会报错。专家仍是 LSTM。门控只读最后一根。
 
 稀疏路径上，训练额外加一项 Switch 式的负载均衡。`P` 是每个专家的平均路由概率。`f` 是 top-k 包含该专家的窗口占比。这一项是 `n_experts * sum(f_i * P_i)`，再乘以 `AUX_LOSS_WEIGHT = 0.01`。它用 `add_loss` 挂上，所以模型仍然只有一个 sigmoid 输出，`predict` 仍是回测用的概率。`MOE_AUX_LOSS=0` 关掉这一项。稠密路径不加它。稠密路径再配一个正的辅助系数会报错。
 
-设置了 `MOE_RESULTS_DIR` 时，运行还会写出 `metrics.csv`（打印的那张表）、`equity.csv`（Manual、KMeans、SOM，以及不扣费用的买入持有）、`buy_and_hold.csv`，以及图 `close.png`、`correlation.png`、`confusion.png`、`equity.png`、`daily_returns.png`。打印的表仍然只有 Manual、KMeans、SOM。那个买入持有文件的费用是 0。它不是第四个训练出来的模型。
+设置了 `MOE_RESULTS_DIR` 时，运行还会写出 `metrics.csv`（打印的那张表）、`equity.csv`（Manual、KMeans、SOM，以及不扣费用的买入持有）、`buy_and_hold.csv`，以及图 `close.png`、`correlation.png`、`confusion.png`、`equity.png`、`daily_returns.png`。打印的表仍然只有 Manual、KMeans、SOM。那个买入持有文件的费用是 0。买入持有没有单独训练。
 
 ## 样本、缩放和回测
 
@@ -34,7 +34,7 @@
 
 `MinMaxScaler` 只在拟合窗口用到的特征行上拟合。K-Means（`N_CLUSTERS = 5`，`random_state=42`，`n_init=10`）和 3×3 的 SOM（`sigma=0.5`，学习率 `0.5`，100 次迭代，`random_seed=42`）只看这一段缩放后的数据。每个模型再对自己的特征子集做同一切片上的缩放。相关热力图只用于查看，仍然使用全样本。
 
-手工特征按这个顺序：
+手工特征按这个顺序。
 
 `Close/Last`、`MA5`、`MA10`、`EMA5`、`EMA10`、`RSI`、`BB_upper`、`BB_lower`、`MACD`、`Signal_line`、`Daily_Return`、`Volatility`、`Open`、`High`、`Low`。
 
